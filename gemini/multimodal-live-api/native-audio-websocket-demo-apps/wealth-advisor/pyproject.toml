@@ -17,7 +17,7 @@ dependencies = [
     "httpx==0.28.1",
     # Google Cloud & AI
     "google-auth==2.40.0",
-    "google-cloud-aiplatform==1.104.0",
+    "google-cloud-aiplatform==1.133.0",
     "google-cloud-discoveryengine==0.13.9",
     "google-cloud-firestore==2.20.2",
     "google-cloud-logging==3.12.1",
