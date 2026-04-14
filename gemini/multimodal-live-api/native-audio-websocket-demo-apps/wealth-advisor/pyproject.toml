@@ -24,7 +24,7 @@ dependencies = [
     "google-cloud-secret-manager==2.23.3",
     "google-cloud-storage==2.19.0",
     "google-genai==1.25.0",
-    "google-adk==1.8.0",
+    "google-adk==1.28.1",
     # Utilities
     "pydantic==2.11.4",
     "pydantic-settings==2.9.1",
