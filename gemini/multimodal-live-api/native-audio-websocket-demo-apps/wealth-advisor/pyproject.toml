@@ -13,7 +13,7 @@ dependencies = [
     "starlette==0.46.2",
     "uvicorn==0.34.2",
     "websockets==15.0.1",
-    "python-multipart==0.0.20",
+    "python-multipart==0.0.26",
     "httpx==0.28.1",
     # Google Cloud & AI
     "google-auth==2.40.0",
@@ -24,7 +24,7 @@ dependencies = [
     "google-cloud-secret-manager==2.23.3",
     "google-cloud-storage==2.19.0",
     "google-genai==1.25.0",
-    "google-adk==1.8.0",
+    "google-adk==1.28.1",
     # Utilities
     "pydantic==2.11.4",
     "pydantic-settings==2.9.1",
