@@ -17,26 +17,19 @@
 "use strict";
 "use server";
 import { renderMap } from "@/libs/maps/maps";
-import { configureGenkit } from "@genkit-ai/core";
-import { promptRef } from "@genkit-ai/dotprompt";
-import { defineFlow, runFlow } from "@genkit-ai/flow";
 import {
   PostcardResult,
   PostcardFlow,
   PostcardFlowSchema,
   PostcardResultSchema,
-  PostcardMapLLMRequest,
-  PostcardImageLLMRequest,
+  PostcardMapLLMRequestSchema,
+  PostcardImageLLMRequestSchema,
   PostcardMapLLMResponseSchema,
 } from "./schema";
-import { genkitConfig } from "./config";
+import { ai, initializeGenkitTelemetry } from "./config";
 import { headers } from "next/headers";
-import { z } from "zod";
 import { getAuth, DecodedIdToken } from "firebase-admin/auth";
 import { firebaseServerApp } from "@/libs/firebase/serverApp";
-
-// Configure Genkit with imported config
-configureGenkit(genkitConfig);
 
 // Is auth enabled?
 const authEnabled = process.env.AUTH_ENABLED?.toLowerCase() !== "false";
@@ -49,13 +42,16 @@ const authEnabled = process.env.AUTH_ENABLED?.toLowerCase() !== "false";
  * @see PostcardFlowSchema
  * @see PostcardResultSchema
  */
-const postcardFlow = defineFlow(
+const postcardFlow = ai.defineFlow(
   {
     name: "Postcard Flow",
     inputSchema: PostcardFlowSchema,
     outputSchema: PostcardResultSchema,
   },
   async (postcard: PostcardFlow) => {
+    // The web action authenticates before invoking this shared flow. The local
+    // Genkit developer runtime invokes the same flow through its dev tools.
+    await initializeGenkitTelemetry();
     // Get a map image of the whole journey and store it as a data URL
     const mapImage = await renderMap(
       postcard.start,
@@ -65,41 +61,37 @@ const postcardFlow = defineFlow(
     const mapUrl = `data:image/png;base64,${mapImage}`;
 
     // Load postcard map multi-modal prompt (for map image & text)
-    const mapPrompt = promptRef<PostcardMapLLMRequest>("postcard-map");
+    const mapPrompt = ai.prompt<
+      typeof PostcardMapLLMRequestSchema,
+      typeof PostcardMapLLMResponseSchema
+    >("postcard-map");
 
     // Send the map image and address details to the model and generate a response in the desired schema
-    const readMapResponse = await mapPrompt.generate<
-      z.ZodTypeAny,
-      typeof PostcardMapLLMResponseSchema
-    >({
-      input: {
-        start: postcard.start,
-        end: postcard.end,
-        mapImage: mapUrl,
-        sender: postcard.sender,
-        recipient: postcard.recipient,
-      },
+    const readMapResponse = await mapPrompt({
+      start: postcard.start,
+      end: postcard.end,
+      mapImage: mapUrl,
+      sender: postcard.sender,
+      recipient: postcard.recipient,
     });
 
     // Map response has a structured output
-    const mapResponse = readMapResponse.output()!;
+    const mapResponse = readMapResponse.output!;
 
     // Load the image generation prompt
-    const postcardPrompt = promptRef<PostcardImageLLMRequest>("postcard-image");
+    const postcardPrompt = ai.prompt<typeof PostcardImageLLMRequestSchema>("postcard-image");
     // Generate an image - it should populate the media output
-    const imagenResponse = await postcardPrompt.generate({
-      input: {
-        start: postcard.start,
-        end: postcard.end,
-        story: readMapResponse.text(),
-      },
+    const imagenResponse = await postcardPrompt({
+      start: postcard.start,
+      end: postcard.end,
+      story: readMapResponse.text,
     });
 
     // Combine outputs from both LLM responses into an object to return
     return {
       description: mapResponse.description,
       story: mapResponse.story,
-      image: imagenResponse.media()?.url || "",
+      image: imagenResponse.media?.url || "",
       map: mapUrl,
     } as PostcardResult;
   },
@@ -118,10 +110,10 @@ export async function callPostcardFlow(
   // Check auth headers
   if (authEnabled) {
     // We don't care about the return value here, just if it throws an error or not.
-    await verifyToken(headers());
+    await verifyToken(await headers());
   }
   // Call the flow once authorized
-  return await runFlow(postcardFlow, args);
+  return await postcardFlow(args);
 }
 
 /**

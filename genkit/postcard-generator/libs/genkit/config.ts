@@ -16,12 +16,14 @@
 
 "use strict";
 import { GoogleAuth } from "google-auth-library";
-import { dotprompt } from "@genkit-ai/dotprompt";
+import { genkit } from "genkit";
+import { logger } from "genkit/logging";
 import { vertexAI } from "@genkit-ai/vertexai";
 import { ollama } from "genkitx-ollama";
-import { ConfigOptions } from "@genkit-ai/core";
-import { googleCloud } from "@genkit-ai/google-cloud";
+import { enableGoogleCloudTelemetry } from "@genkit-ai/google-cloud";
 import { AlwaysOnSampler } from "@opentelemetry/sdk-trace-base";
+
+logger.setLogLevel("debug");
 
 let auth: GoogleAuth;
 
@@ -39,22 +41,27 @@ export async function getIdToken(url: string): Promise<string> {
   return client.idTokenProvider.fetchIdToken(url);
 }
 
-export const genkitConfig = {
+// Match the telemetry options used by the previous configuration, initialized
+// only when the shared flow runs (builds do not need cloud credentials).
+let telemetryReady: Promise<void> | undefined;
+export function initializeGenkitTelemetry(): Promise<void> {
+  return telemetryReady ??= enableGoogleCloudTelemetry({
+    forceDevExport: true,
+    sampler: new AlwaysOnSampler(),
+    autoInstrumentation: true,
+    autoInstrumentationConfig: {
+      "@opentelemetry/instrumentation-fs": { enabled: false },
+      "@opentelemetry/instrumentation-dns": { enabled: true },
+      "@opentelemetry/instrumentation-net": { enabled: true },
+    },
+  });
+}
+
+export const ai = genkit({
   plugins: [
-    vertexAI({ location: "europe-west2" }),
-    dotprompt(),
-    googleCloud({
-      telemetryConfig: {
-        forceDevExport: true, // Set this to true to export telemetry for local runs
-        sampler: new AlwaysOnSampler(),
-        autoInstrumentation: true,
-        autoInstrumentationConfig: {
-          "@opentelemetry/instrumentation-fs": { enabled: false },
-          "@opentelemetry/instrumentation-dns": { enabled: true },
-          "@opentelemetry/instrumentation-net": { enabled: true },
-        },
-      },
-    }),
+    // Register the original prompt model explicitly; Genkit 1.0.4
+    // advertises the versioned -001 model by default, not this alias.
+    vertexAI({ location: "europe-west2", models: ["gemini-2.0-flash"] }),
     ollama({
       models: [{ name: process.env.OLLAMA_MODEL_NAME || "gemma2:9b" }],
       serverAddress:
@@ -64,11 +71,4 @@ export const genkitConfig = {
       }),
     }),
   ],
-  // Log debug output to the console.
-  logLevel: "debug",
-  enableTracingAndMetrics: true,
-  telemetry: {
-    instrumentation: "googleCloud",
-    logger: "googleCloud",
-  },
-} as ConfigOptions;
+});
