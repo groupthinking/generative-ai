@@ -10,7 +10,7 @@
 
 Note: These dependencies can be automated by following the [deployment instructions](deploy.md).
 
-1. A Google Cloud Project with Billing, Vertex enabled
+1. A Google Cloud Project with Billing, Vertex AI enabled
 2. A [Google Maps API key](https://developers.google.com/maps/documentation/embed/get-api-key). This is required for autocomplete, routing, and static map generation
 3. Vertex AI enabled in your project
 
@@ -43,11 +43,11 @@ loads the configured environment file, then imports `libs/genkit/flows.ts`, the
 same flow module used by the web application. The Genkit console is available
 on [localhost:4000](http://localhost:4000) (or the next free port printed by the
 CLI). The first launch downloads the matching UI assets and presents the CLI's
-analytics notice; internet access is required for that download. Select **Postcard Flow** to inspect its schema and run it. The Vertex and
+analytics notice; internet access is required for that download. Select **Postcard Flow** to inspect its schema and run it. The Vertex AI and
 Ollama plugins and existing prompt files remain available.
 
 Registration does not run the map or model calls. Running a flow does use the
-configured Maps, Vertex/Ollama and telemetry services, so retain the credentials
+configured Maps, Vertex AI/Ollama and telemetry services, so retain the credentials
 and project setup above. The developer tools are trusted local development
 services; they invoke the flow directly, outside the web application's Firebase
 request-authentication boundary. Do not expose their ports to an untrusted
