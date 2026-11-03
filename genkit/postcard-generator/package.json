@@ -78,6 +78,9 @@
     },
     "@opentelemetry/sdk-trace-node@1": {
       "@opentelemetry/propagator-jaeger": "2.9.0"
+    },
+    "@google-cloud/opentelemetry-cloud-trace-exporter@2.4.1": {
+      "@grpc/grpc-js": "1.14.6"
     }
   },
   "engines": {
