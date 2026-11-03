@@ -26,7 +26,7 @@ The complete audits on 2026-11-03 report the following package records. The prod
 
 All six audits have zero low findings. These are package records, including propagated parent findings, rather than counts of independent vulnerabilities. Although the ZIP advisories are removed, the full high-package count increases: `@genkit-ai/ai`, `genkit` and the CLI's nested `zod-to-json-schema` are now reported as high through the existing Zod advisory, while the `extract-zip` high record is removed. The earlier initial CLI repair had reported 8 high and 63 moderate findings, versus 3 high and 63 moderate before that developer repair. None of these counts establishes security closure. No audit allowlist, development-dependency exclusion from the gate, removed developer feature or forced Zod 4 override is used.
 
-The full dependency-tree check also still reports the preexisting gRPC override mismatch: the cloud trace exporter asks for overridden `@grpc/grpc-js 1.13.6`, while the frozen root resolves 1.14.6. The previous lock produces the same mismatch; this CLI update leaves that runtime closure unchanged. Do not describe the entire dependency tree or either candidate as audit-clean.
+The preexisting gRPC override mismatch is corrected with an override scoped to the cloud trace exporter, matching its already installed 1.14.6. The existing global 1.13.6 override remains for the Firebase consumer. The complete lockfile and runtime package versions remain byte-for-byte unchanged. A clean frozen install and the full `npm ls --all` check now pass on both candidates. This declaration repair does not fix the Zod audit findings or establish security readiness.
 
 ## Validation scope
 
