@@ -8,7 +8,7 @@ const toolsRequire = createRequire(require.resolve('@genkit-ai/tools-common'));
 const AdmZip = toolsRequire('adm-zip');
 const {downloadAndExtractUiAssets} = toolsRequire('../utils/ui-assets.js');
 
-test('the actual CLI asset consumer extracts its UI archive with the scoped patched ZIP dependency', async()=>{
+test('the actual CLI asset consumer extracts its UI archive with the upstream patched ZIP dependency', async()=>{
   const folder=await fs.mkdtemp(path.join(os.tmpdir(),'postcard-ui-assets-'));
   try {
     assert.equal(toolsRequire('adm-zip/package.json').version,'0.6.1');
