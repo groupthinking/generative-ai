@@ -1,6 +1,6 @@
 # Security and Genkit compatibility
 
-This draft compatibility prerequisite preserves the pre-security-update declared Next versions (15.4.7 for this app) and lint configuration. It is not a security-ready or deployable candidate; the separate Next closure restores Next 15.5.28, Sharp 0.35.5 and PostCSS 8.5.23. The audit table below distinguishes this deliberately vulnerable compatibility baseline from the complete patched-Next candidate. This prerequisite separately passed clean frozen installs, tests, typechecks, lint, full builds and native image checks at its actual older Next versions. It must remain a draft and must not be merged or deployed as the finished security repair. The Genkit packages are aligned on 1.0.4 because the previous manifest required Genkit 1 while its lock resolved 0.9.12. The source uses the Genkit 1 instance, prompt and response APIs; authentication is checked before model execution and lazy telemetry startup. Image/text generation and map prompt behavior remain covered by the flow tests. Firebase server headers are awaited for Next15.
+Next 15.5.28, Sharp 0.35.5 and PostCSS 8.5.23 are resolved and validated on Node 22. The Genkit packages are aligned on 1.0.4 because the previous manifest required Genkit 1 while its lock resolved 0.9.12. The source uses the Genkit 1 instance, prompt and response APIs; authentication is checked before model execution and lazy telemetry startup. Image/text generation and map prompt behavior remain covered by the flow tests. Firebase server headers are awaited for Next15.
 
 The scoped Jaeger 2.9 propagator override fixes malformed-percent header handling while retaining the existing OpenTelemetry 1 NodeTracerProvider. Actual provider injection/extraction, baggage handling and malformed headers are covered by the regression test. The optional Winston transport build warning remains visible.
 
@@ -24,9 +24,19 @@ The complete audits on 2026-11-03 report the following package records. The prod
 | Current patched-Next candidate, CLI 1.45.0 | 0 / 10 / 84 | 0 / 5 / 65 |
 | Current draft prerequisite at Next 15.4.7 | 1 / 12 / 84 | 1 / 7 / 65 |
 
-All six audits have zero low findings. These are package records, including propagated parent findings, rather than counts of independent vulnerabilities. Although the ZIP advisories are removed, the full high-package count increases: `@genkit-ai/ai`, `genkit` and the CLI's nested `zod-to-json-schema` are now reported as high through the existing Zod advisory, while the `extract-zip` high record is removed. The earlier initial CLI repair had reported 8 high and 63 moderate findings, versus 3 high and 63 moderate before that developer repair. None of these counts establishes security closure. No audit allowlist, development-dependency exclusion from the gate, removed developer feature or forced Zod 4 override is used.
+All six audits have zero low findings. These are package records, including propagated parent findings, rather than counts of independent vulnerabilities. Although the ZIP advisories are removed, the full high-package count increases: `@genkit-ai/ai`, `genkit` and the CLI's nested `zod-to-json-schema` are now reported as high through the existing Zod advisory, while the `extract-zip` high record is removed. The earlier initial CLI repair had reported 8 high and 63 moderate findings, versus 3 high and 63 moderate before that developer repair. None of these counts establishes security closure. No development-dependency exclusion from the gate, removed developer feature or forced Zod 4 override is used. The single documented audit exception below is the only allowlisted advisory.
 
 The preexisting gRPC override mismatch is corrected with an override scoped to the cloud trace exporter, matching its already installed 1.14.6. The existing global 1.13.6 override remains for the Firebase consumer. The complete lockfile and runtime package versions remain byte-for-byte unchanged. A clean frozen install and the full `npm ls --all` check now pass on both candidates. This declaration repair does not fix the Zod audit findings or establish security readiness.
+
+## Documented audit exception
+
+| Advisory | Package | Added | Review by |
+| --- | --- | --- | --- |
+| [GHSA-mrhx-c7xc-m3w5](https://github.com/advisories/GHSA-mrhx-c7xc-m3w5) (high) | zod | 2026-11-05 | 2027-02-05, or when Genkit supports Zod 4, whichever comes first |
+
+Reason: Genkit 1.x and OpenAI 4.x require Zod 3, and no patched Zod 3.x release exists (the advisory affects zod <4.6.6). Forcing Zod 4.6.7 through an override breaks 2 of the 10 postcard tests because it changes Genkit's schema API and JSON-schema translation.
+
+The exception is recorded in `audit-exceptions.json` and enforced by `scripts/audit-with-exceptions.cjs` in the "Full dependency audit (postcard)" CI job only. The job still runs the full audit, development dependencies included, at the high level. It excuses only that one advisory ID: any other high or critical advisory fails the job, and the exception stops applying after its review-by date, which fails the job until it is reviewed. The package records reported only through this Zod advisory remain visible in the job log. The autocal, wealth and audio-browser-tools audit jobs are unchanged and keep the plain `npm audit --audit-level=high` gate. This exception does not fix the Zod finding or establish security closure.
 
 ## Validation scope
 
