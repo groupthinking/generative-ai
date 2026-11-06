@@ -27,7 +27,7 @@ export const firebaseServerApp =
   getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
 
 export async function getAuthenticatedAppForUser() {
-  const idToken = headers().get("Authorization")?.split("Bearer ")[1];
+  const idToken = (await headers()).get("Authorization")?.split("Bearer ")[1];
 
   const firebaseServerApp = initializeServerApp(
     firebaseConfig,

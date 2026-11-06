@@ -1,4 +1,4 @@
-FROM node:20-alpine AS root_build
+FROM node:22-alpine AS root_build
 
 ARG NODE_ENV
 ARG NEXT_PUBLIC_BACKEND_URL
@@ -8,7 +8,7 @@ ENV NEXT_PUBLIC_BACKEND_URL=$NEXT_PUBLIC_BACKEND_URL
 
 WORKDIR /app/frontend
 COPY src/frontend/package*.json ./
-RUN npm ci --force
+RUN npm ci
 COPY src/frontend/app ./app/
 COPY src/frontend/components ./components/
 COPY src/frontend/lib ./lib/
@@ -22,7 +22,7 @@ COPY src/frontend/tsconfig.json .
 # COPY src/frontend/app/fonts .
 COPY src/frontend/public/fonts .
 
-RUN npm run build --force
+RUN npm run build
 
 FROM root_build AS serve
 

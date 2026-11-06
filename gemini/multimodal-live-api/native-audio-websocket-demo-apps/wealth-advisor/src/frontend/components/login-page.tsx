@@ -56,7 +56,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
           className="w-full border border-white/20 bg-white/5 backdrop-blur-sm text-white font-bold py-4 rounded-full hover:bg-white/10 transition active:scale-[0.98]"
           onClick={handleLoginClick}
         >
-          Don't have an account? Sign Up
+          Don&apos;t have an account? Sign Up
         </button>
       </div>
     </div>

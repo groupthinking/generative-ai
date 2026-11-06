@@ -15,17 +15,13 @@
  */
 
 "use strict";
-import dynamic from "next/dynamic";
+import PostcardForm from "./components/ClientPostcardForm";
 import Container from "@mui/material/Container";
 import Box from "@mui/material/Box";
 import Navigation from "./components/Navigation";
 import { AuthContextProvider } from "./components/AuthContext";
 
 const enabled = (process.env.AUTH_ENABLED?.toLowerCase() !== "false");
-
-const PostcardForm = dynamic(() => import("./components/PostcardForm"), {
-  ssr: false, // Prevent this component from rendering on the server
-});
 
 export default async function Home() {
   return (

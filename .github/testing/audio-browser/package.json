@@ -1,0 +1,13 @@
+{
+  "name": "generative-ai-audio-browser-regression-tools",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Pinned test-only bundler and browser driver for the wealth audio lifecycle regression.",
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.2",
+    "playwright": "1.64.1"
+  }
+}
