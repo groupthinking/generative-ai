@@ -114,5 +114,13 @@ jobs:
       - name: Frozen audit graph including development dependencies
         run: npm ci --ignore-scripts --no-audit --no-fund
       - name: Enforce full high-severity audit
+        if: matrix.id != 'postcard'
         # This remains a real failing check while known high findings remain.
         run: npm audit --audit-level=high
+      - name: Enforce full high-severity audit with documented exceptions
+        if: matrix.id == 'postcard'
+        # Same full audit (development dependencies included) at the same high
+        # level. audit-exceptions.json excuses only GHSA-mrhx-c7xc-m3w5 (zod),
+        # added 2026-11-05, review by 2027-02-05 or when Genkit supports Zod 4.
+        # Any other high or critical advisory, or an expired exception, fails.
+        run: node scripts/audit-with-exceptions.cjs
