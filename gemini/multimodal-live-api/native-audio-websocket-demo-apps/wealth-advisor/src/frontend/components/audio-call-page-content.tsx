@@ -20,6 +20,7 @@ import { useSearchParams } from "next/navigation"
 import { getWebSocketUrl, getSessionId } from "@/lib/config"
 import { startAudioPlayerWorklet } from "@/lib/audio-player"
 import { startAudioRecorderWorklet } from "@/lib/audio-recorder"
+import { acceptsPcmAudio } from "@/lib/audio-mime"
 import { AudioCallInterface, Message } from "@/components/audio-call-interface"
 import {
   AppointmentScheduler,
@@ -39,6 +40,8 @@ export default function AudioCallPageContent() {
   const [isAudio, setIsAudio] = useState(false)
   const [audioError, setAudioError] = useState<string | null>(null)
   const startingAudio = useRef(false)
+  const mounted = useRef(true)
+  const ownedAudioContexts = useRef(new Set<AudioContext>())
   const audioResources = useRef<{ ws?: WebSocket; player?: AudioWorkletNode; recorder?: AudioWorkletNode; stream?: MediaStream }>({})
   const [notificationText, setNotificationText] = useState<string | undefined>()
   const [transcription, setTranscription] = useState<{ user: string; agent: string }>({ user: '', agent: '' })
@@ -53,6 +56,7 @@ export default function AudioCallPageContent() {
   const [, setAudioRecorderNode] = useState<AudioWorkletNode | null>(null)
   const [micStream, setMicStream] = useState<MediaStream | null>(null)
   const [isUserMuted, setIsUserMuted] = useState(false)
+  const isUserMutedRef = useRef(false)
   const [inputAudioContext, setInputAudioContext] = useState<AudioContext | null>(null)
   const [outputAudioContext, setOutputAudioContext] = useState<AudioContext | null>(null)
   const audioQueue = useRef<ArrayBuffer[]>([])
@@ -68,12 +72,28 @@ export default function AudioCallPageContent() {
   const isEffectivelyMuted = isUserMuted
   const searchParams = useSearchParams()
 
+  const closeAudioContext = useCallback((context: AudioContext) => {
+    if (ownedAudioContexts.current.delete(context) && context.state !== "closed") {
+      void context.close().catch(error => console.error("Audio Context cleanup failed:", error))
+    }
+  }, [])
+
+  useEffect(() => {
+    mounted.current = true
+    const contexts = ownedAudioContexts.current
+    return () => {
+      mounted.current = false
+      contexts.forEach(closeAudioContext)
+    }
+  }, [closeAudioContext])
+
   const startConversation = useCallback(async (notificationText?: string) => {
     if (isAudio || startingAudio.current) return
     startingAudio.current = true
     if (notificationText) {
       setNotificationText(notificationText)
     }
+    isUserMutedRef.current = false
     setIsUserMuted(false)
     setAudioError(null)
     
@@ -82,21 +102,26 @@ export default function AudioCallPageContent() {
     try {
       // Create contexts at the rates expected by the backend.
       inputContext = new AudioContext({ sampleRate: 16000 })
+      ownedAudioContexts.current.add(inputContext)
       outputContext = new AudioContext({ sampleRate: 24000 })
+      ownedAudioContexts.current.add(outputContext)
       await Promise.all([inputContext.resume(), outputContext.resume()])
+      if (!mounted.current || !ownedAudioContexts.current.has(inputContext) || !ownedAudioContexts.current.has(outputContext)) return
       setInputAudioContext(inputContext)
       setOutputAudioContext(outputContext)
 
       setIsAudio(true)
     } catch (error) {
-      if (inputContext && inputContext.state !== "closed") void inputContext.close()
-      if (outputContext && outputContext.state !== "closed") void outputContext.close()
-      setAudioError(error instanceof Error ? error.message : "Audio initialization failed")
-      console.error("Audio Context initialization failed:", error)
+      if (inputContext) closeAudioContext(inputContext)
+      if (outputContext) closeAudioContext(outputContext)
+      if (mounted.current) {
+        setAudioError(error instanceof Error ? error.message : "Audio initialization failed")
+        console.error("Audio Context initialization failed:", error)
+      }
     } finally {
       startingAudio.current = false
     }
-  }, [isAudio]);
+  }, [isAudio, closeAudioContext]);
 
   useEffect(() => {
     setNotificationText(searchParams.get('notification_text') || undefined);
@@ -178,6 +203,8 @@ export default function AudioCallPageContent() {
   }
 
   const audioRecorderHandler = useCallback((pcmData: ArrayBuffer, ws: WebSocket) => {
+    // A new worklet can emit before the effect disables its microphone track.
+    if (isUserMutedRef.current || websocketRef.current !== ws) return
     sendMessage(
       {
         mime_type: "audio/pcm;rate=16000",
@@ -222,7 +249,8 @@ export default function AudioCallPageContent() {
   }, [audioRecorderHandler, stopAudioPlayer])
 
   const toggleMute = () => {
-    setIsUserMuted((prevState) => !prevState)
+    isUserMutedRef.current = !isUserMutedRef.current
+    setIsUserMuted(isUserMutedRef.current)
   }
 
   useEffect(() => {
@@ -237,10 +265,10 @@ export default function AudioCallPageContent() {
   useEffect(() => {
     if (!isAudio || !inputAudioContext || !outputAudioContext) return
     return () => {
-      if (inputAudioContext.state !== "closed") void inputAudioContext.close()
-      if (outputAudioContext.state !== "closed") void outputAudioContext.close()
+      closeAudioContext(inputAudioContext)
+      closeAudioContext(outputAudioContext)
     }
-  }, [isAudio, inputAudioContext, outputAudioContext])
+  }, [isAudio, inputAudioContext, outputAudioContext, closeAudioContext])
 
   useEffect(() => {
     if (isAudio && inputAudioContext && outputAudioContext) {
@@ -332,7 +360,7 @@ export default function AudioCallPageContent() {
           }
         }
 
-        if (message_from_server.mime_type == "audio/pcm") {
+        if (acceptsPcmAudio(message_from_server.mime_type, outputAudioContext.sampleRate)) {
           if (isInterruptedRef.current) {
             return
           }

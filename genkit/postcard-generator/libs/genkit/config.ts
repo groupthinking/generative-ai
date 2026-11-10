@@ -54,6 +54,9 @@ export function initializeGenkitTelemetry(): Promise<void> {
       "@opentelemetry/instrumentation-dns": { enabled: true },
       "@opentelemetry/instrumentation-net": { enabled: true },
     },
+  }).catch((error) => {
+    telemetryReady = undefined;
+    throw error;
   });
 }
 

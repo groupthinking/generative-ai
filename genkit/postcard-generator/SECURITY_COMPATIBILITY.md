@@ -14,34 +14,30 @@ The actual UI asset downloader still uses `adm-zip 0.6.1`. Tools-common 1.45.0 n
 
 ## Remaining security hold
 
-Full security approval remains blocked by [GHSA-mrhx-c7xc-m3w5](https://github.com/advisories/GHSA-mrhx-c7xc-m3w5). Runtime Genkit and its OpenAI dependency use Zod 3.25.76; CLI 1.45.0, tools-common and telemetry-server also pin Zod 3.25.67. The latest inspected Genkit core 1.43.0 still declares Zod 3. A forced Zod 4 override has not been used because it changes Genkit's schema API and JSON-schema translation contract.
+Full security approval remains blocked by [GHSA-mrhx-c7xc-m3w5](https://github.com/advisories/GHSA-mrhx-c7xc-m3w5). Runtime Genkit and its OpenAI dependency use Zod 3.25.76; CLI 1.45.0, tools-common and telemetry-server also pin Zod 3.25.67. Genkit core 1.44.0, inspected on 2026-11-10, still declares Zod 3. A forced Zod 4 override has not been used because it changes Genkit's schema API and JSON-schema translation contract.
 
 The complete audits on 2026-11-03 report the following package records. The production-only columns are supplementary diagnostics; the full audit remains the security gate.
 
 | Candidate | Full: critical / high / moderate | Production only: critical / high / moderate |
 | --- | --- | --- |
 | Previous patched-Next candidate, CLI 1.44.1 | 0 / 8 / 86 | 0 / 3 / 67 |
-| Current patched-Next candidate, CLI 1.45.0 | 0 / 10 / 84 | 0 / 5 / 65 |
-| Current draft prerequisite at Next 15.4.7 | 1 / 12 / 84 | 1 / 7 / 65 |
+| November 3 patched-Next candidate, CLI 1.45.0 | 0 / 10 / 84 | 0 / 5 / 65 |
+| November 3 older-Next prerequisite (historical) | 1 / 12 / 84 | 1 / 7 / 65 |
 
-All six audits have zero low findings. These are package records, including propagated parent findings, rather than counts of independent vulnerabilities. Although the ZIP advisories are removed, the full high-package count increases: `@genkit-ai/ai`, `genkit` and the CLI's nested `zod-to-json-schema` are now reported as high through the existing Zod advisory, while the `extract-zip` high record is removed. The earlier initial CLI repair had reported 8 high and 63 moderate findings, versus 3 high and 63 moderate before that developer repair. None of these counts establishes security closure. No development-dependency exclusion from the gate, removed developer feature or forced Zod 4 override is used. The single documented audit exception below is the only allowlisted advisory.
+All six historical audits have zero low findings. These are package records, including propagated parent findings, rather than counts of independent vulnerabilities. Although the ZIP advisories are removed, the full high-package count increases: `@genkit-ai/ai`, `genkit` and the CLI's nested `zod-to-json-schema` are reported as high through the existing Zod advisory, while the `extract-zip` high record is removed. The earlier initial CLI repair had reported 8 high and 63 moderate findings, versus 3 high and 63 moderate before that developer repair. None of these counts establishes security closure. No development-dependency exclusion from the gate, removed developer feature or forced Zod 4 override is used.
 
 The preexisting gRPC override mismatch is corrected with an override scoped to the cloud trace exporter, matching its already installed 1.14.6. The existing global 1.13.6 override remains for the Firebase consumer. The complete lockfile and runtime package versions remain byte-for-byte unchanged. A clean frozen install and the full `npm ls --all` check now pass on both candidates. This declaration repair does not fix the Zod audit findings or establish security readiness.
 
-## Documented audit exception
-
-| Advisory | Package | Added | Review by |
-| --- | --- | --- | --- |
-| [GHSA-mrhx-c7xc-m3w5](https://github.com/advisories/GHSA-mrhx-c7xc-m3w5) (high) | zod | 2026-11-05 | 2027-02-05, or when Genkit supports Zod 4, whichever comes first |
-
-Reason: Genkit 1.x and OpenAI 4.x require Zod 3, and no patched Zod 3.x release exists (the advisory affects zod <4.6.6). Forcing Zod 4.6.7 through an override breaks 2 of the 10 postcard tests because it changes Genkit's schema API and JSON-schema translation.
-
-The exception is recorded in `audit-exceptions.json` and enforced by `scripts/audit-with-exceptions.cjs` in the "Full dependency audit (postcard)" CI job only. The job still runs the full audit, development dependencies included, at the high level. It excuses only that one advisory ID: any other high or critical advisory fails the job, and the exception stops applying after its review-by date, which fails the job until it is reviewed. The package records reported only through this Zod advisory remain visible in the job log. The autocal, wealth and audio-browser-tools audit jobs are unchanged and keep the plain `npm audit --audit-level=high` gate. This exception does not fix the Zod finding or establish security closure.
+The postcard-only advisory exception introduced on November 5 is removed. Every application and the browser tools now use the same plain `npm audit --audit-level=high` gate, including development dependencies, with no allowlist. Passing application tests cannot waive the remaining Zod finding or establish security closure.
 
 ## Validation scope
 
-On Node 22.23.4 with npm 10.9.9, both postcard variants pass frozen installation without manifest/lock changes, all 10 tests, TypeScript, lint, a complete four-page production build and actual PNG optimization at their respective frozen Next/Sharp versions. The initial production builds failed in Next's Google Fonts URL parser; one unchanged retry per candidate passed. No font substitution, mocked font response, skipped build or application change was used to obtain the passing result.
+On November 10, the review repairs pass all 11 postcard tests, TypeScript, lint and a complete four-page production build on Node 22.23.4 / npm 10.9.9. The new telemetry regression first reproduced a permanently cached rejection, then verified shared concurrent attempts, retry after failure and caching after success. Existing flow, authentication, runtime discovery/execution, Jaeger and ZIP assertions remain intact. A local service occupied the IPv6 default reflection port on the validation Mac; the initial runtime tests failed. Running the unchanged tests with IPv4-first Node resolution passed all 11 tests. This environment adjustment is local and is not an application or workflow change. Dependencies were reused from an installation with byte-identical manifest and lock files; a fresh hosted install remains a separate check.
+
+The full November 10 postcard audit exits with failure and reports 0 critical, 10 high, 73 moderate and 0 low affected package records. The unchanged high-severity gate therefore remains blocking. These counts are a dated observation, not a waiver or a claim that no other security issues exist.
+
+On November 3, using Node 22.23.4 with npm 10.9.9, both postcard variants passed frozen installation without manifest/lock changes, all 10 tests, TypeScript, lint, a complete four-page production build and actual PNG optimization at their respective frozen Next/Sharp versions. The initial production builds failed in Next's Google Fonts URL parser; one unchanged retry per candidate passed. No font substitution, mocked font response, skipped build or application change was used to obtain that result. These are historical receipts, not validation of later changes.
 
 The tests use real Genkit schemas, plugins, prompts, reflection and CLI routing, with controlled external provider adapters and temporary CLI settings. They verify authentication ordering, input rejection before adapters, selected models, Maps/prompt/image output, Jaeger handling and ZIP safety. They do not prove downloaded UI rendering, live Maps/Vertex AI/Ollama availability, model quality, cloud authentication or production deployment.
 
-The original Next-only scope finding is resolved by the separate compatibility prerequisite: the stacked security PR retains the seven-file Next closure. The prerequisite remains a draft with the deliberately older Next versions and must not be merged or deployed as the finished security repair.
+The original Next-only scope finding was resolved by reviewing the seven-file Next closure in separate PR #106. That PR was merged into #109 on November 6. This branch now contains Next 15.5.28 in all three applications: autocal, postcard and wealth. It is no longer an older-Next prerequisite; the complete combined repair still must not be merged into main or deployed as security-complete while the full audit remains blocked.

@@ -20,6 +20,16 @@ function worklet(file) {
   return { node: new Registered(), messages };
 }
 
+test('PCM routing accepts backend MIME parameters only at the player sample rate', () => {
+  const { acceptsPcmAudio } = loadTS('lib/audio-mime.ts');
+  for (const mime of ['audio/pcm', 'audio/pcm;rate=24000', ' Audio/PCM ; RATE = "24000" ', 'audio/pcm;channels=1;rate=24000']) {
+    assert.equal(acceptsPcmAudio(mime, 24000), true, mime);
+  }
+  for (const mime of [null, 24000, 'audio/wav;rate=24000', 'audio/pcm;rate=16000', 'audio/pcm;rate=24000Hz', 'audio/pcm;rate', 'audio/pcm;rate="24000', 'audio/pcm;rate=24000;rate=16000']) {
+    assert.equal(acceptsPcmAudio(mime, 24000), false, String(mime));
+  }
+});
+
 test('recorder converts real input samples to clipped little-endian PCM16 and tracks speech', () => {
   const { node, messages } = worklet('pcm-recorder.js');
   node.process([[new Float32Array([-2, -1, 0, 0.5, 1, 2])]]);

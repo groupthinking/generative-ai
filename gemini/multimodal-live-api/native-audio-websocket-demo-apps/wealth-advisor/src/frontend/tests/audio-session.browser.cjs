@@ -25,9 +25,14 @@ const { chromium } = require(playwrightPath);
 const browserChannel = process.env.AUDIO_TEST_BROWSER_CHANNEL;
 const expectedBrowser = JSON.parse(fs.readFileSync(path.join(path.dirname(playwrightPath), 'playwright-core/browsers.json'), 'utf8')).browsers.find(browser => browser.name === 'chromium').browserVersion;
 const entry = `import React from 'react';import {createRoot} from 'react-dom/client';import App from ${JSON.stringify(path.join(app, 'components/audio-call-page-content.tsx'))};
-const NativeAudioContext=window.AudioContext;window.contexts=[];window.sockets=[];window.probeStreams=[];
+const NativeAudioContext=window.AudioContext;window.contexts=[];window.sockets=[];window.probeStreams=[];window.workletPosts=[];window.resumeResolvers=[];window.earlyRecorderEvents=[];
 const nativeCapture=navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);navigator.mediaDevices.getUserMedia=async(...args)=>{const stream=await nativeCapture(...args);window.probeStreams.push(stream);return stream};
-window.AudioContext=class extends NativeAudioContext{constructor(options){super(options);window.contexts.push(this)}};
+window.AudioContext=class extends NativeAudioContext{
+  constructor(options){super(options);window.contexts.push(this)}
+  async resume(){await super.resume();if(window.holdAudioResume)await new Promise(resolve=>window.resumeResolvers.push(resolve))}
+  createMediaStreamSource(stream){const source=super.createMediaStreamSource(stream);const connect=source.connect.bind(source);source.connect=(node,...args)=>{const result=connect(node,...args);if(window.injectEarlyPCM){window.injectEarlyPCM=false;window.earlyRecorderEvents.push({trackEnabled:stream.getAudioTracks()[0].enabled,muted:document.querySelector('[data-probe-mute]')?.textContent==='Probe unmute'});node.port.onmessage({data:{pcm:new Uint8Array([1,2,3,4]).buffer,speaking:false}})}return result};return source}
+};
+const NativeAudioWorkletNode=window.AudioWorkletNode;window.AudioWorkletNode=class extends NativeAudioWorkletNode{constructor(context,name,options){super(context,name,options);const post=this.port.postMessage.bind(this.port);this.port.postMessage=(data,...args)=>{window.workletPosts.push({name,pcm:data instanceof ArrayBuffer?Array.from(new Uint8Array(data)):null});return post(data,...args)}}};
 window.WebSocket=class {static OPEN=1;static CLOSED=3;constructor(url){this.url=url;this.readyState=0;window.sockets.push(this);setTimeout(()=>{this.readyState=1;this.onopen?.({})},0)}send(data){(this.messages||=[]).push(data)}close(){this.readyState=3;this.onclose?.({code:1000,reason:'controlledclose'})}};
 window.ParamsContext=React.createContext(new URLSearchParams('notification_text=first'));
 function Harness(){const[params,setParams]=React.useState(new URLSearchParams('notification_text=first'));window.setProbeParams=(query)=>setParams(new URLSearchParams(query));return <window.ParamsContext.Provider value={params}><App/></window.ParamsContext.Provider>}
@@ -37,7 +42,7 @@ window.probeRoot=createRoot(document.getElementById('root'));window.probeRoot.re
                     build.onResolve({ filter: /^next\/(navigation|link)$/ }, a => ({ path: a.path, namespace: 'stub' }));
                     build.onResolve({ filter: /^(?:@\/components\/|\.\/(?:appointment-scheduler|agent-execution-confirmation-notification))/ }, a => ({ path: a.path, namespace: 'stub' }));
                     build.onResolve({ filter: /^@\/lib\// }, a => ({ path: path.join(app, a.path.slice(2) + '.ts') }));
-                    build.onLoad({ filter: /.*/, namespace: 'stub' }, a => ({ loader: 'tsx', resolveDir: app, contents: a.path === 'next/navigation' ? `import React from 'react';export function useSearchParams(){return React.useContext(window.ParamsContext)}` : a.path === 'next/link' ? `import React from 'react';export default function Link({children}){return <span>{children}</span>}` : `export const AudioCallInterface=()=>null,AppointmentScheduler=()=>null,MobileNotification=()=>null,AgentStatus=()=>null,HistoryMenu=()=>null,ProfileMenu=()=>null;export default ()=>null;` }));
+                    build.onLoad({ filter: /.*/, namespace: 'stub' }, a => ({ loader: 'tsx', resolveDir: app, contents: a.path === 'next/navigation' ? `import React from 'react';export function useSearchParams(){return React.useContext(window.ParamsContext)}` : a.path === 'next/link' ? `import React from 'react';export default function Link({children}){return <span>{children}</span>}` : `import React from 'react';export const AudioCallInterface=({isMuted,toggleMute})=><button data-probe-mute onClick={toggleMute}>{isMuted?'Probe unmute':'Probe mute'}</button>,AppointmentScheduler=()=>null,MobileNotification=()=>null,AgentStatus=()=>null,HistoryMenu=()=>null,ProfileMenu=()=>null;export default ()=>null;` }));
                 } }] });
     const js = result.outputFiles[0].contents;
     const server = http.createServer((req, res) => { if (req.url === '/bundle.js') {
@@ -65,10 +70,30 @@ window.probeRoot=createRoot(document.getElementById('root'));window.probeRoot.re
         const before = await page.evaluate(() => ({ contexts: window.contexts.map(c => ({ sampleRate: c.sampleRate, state: c.state })), sockets: window.sockets.map(s => ({ url: s.url, state: s.readyState })), alert: document.querySelector('[role=alert]')?.textContent || null }));
         assert.equal(before.alert, null);
         assert.equal(before.sockets[0].state, 1);
-        await page.evaluate(() => window.setProbeParams('notification_text=second'));
+        const routing = await page.evaluate(() => {
+            const received = () => window.workletPosts.filter(p => p.name === 'wealth-pcm-player' && p.pcm);
+            const deliver = mime_type => window.sockets.at(-1).onmessage({ data: JSON.stringify({ mime_type, data: 'AAABAAIAAwA=' }) });
+            const initial = received().length;
+            deliver('audio/pcm;rate=24000');
+            const backend = received().length - initial;
+            const payload = backend ? received().at(-1).pcm : null;
+            deliver('audio/pcm;rate=16000');
+            const incompatibleRate = received().length - initial - backend;
+            deliver('audio/pcm');
+            return { backend, incompatibleRate, bare: received().length - initial - backend - incompatibleRate, payload };
+        });
+        await page.getByRole('button', { name: 'Probe mute', exact: true }).click();
+        await page.waitForFunction(() => window.probeStreams[0].getAudioTracks().every(t => !t.enabled));
+        await page.evaluate(() => { window.injectEarlyPCM = true; window.setProbeParams('notification_text=second'); });
         await page.waitForFunction(() => window.probeStreams.length === 2 && window.probeStreams[0].getTracks().every(t => t.readyState === 'ended') && window.probeStreams[1].getTracks().every(t => t.readyState === 'live'));
         const after = await page.evaluate(() => ({ contexts: window.contexts.map(c => ({ sampleRate: c.sampleRate, state: c.state })), sockets: window.sockets.map(s => ({ url: s.url, state: s.readyState })), alert: document.querySelector('[role=alert]')?.textContent || null }));
-        const evidence = { source: app + '/components/audio-call-page-content.tsx', actualReact: require(path.join(app, 'node_modules/react/package.json')).version, actualBrowser: await browser.version(), boundary: 'Actual component/React/browser AudioContext/worklets/fake microphone; only routing/UI siblings and websocket transport controlled. No model/backend call.', before, after, errors };
+        const mutedReconnect = await page.evaluate(() => ({
+            earlyEvents: window.earlyRecorderEvents,
+            audioMessages: (window.sockets.at(-1).messages || []).map(m => JSON.parse(m)).filter(m => m.mime_type === 'audio/pcm;rate=16000').length,
+        }));
+        await page.getByRole('button', { name: 'Probe unmute', exact: true }).click();
+        await page.waitForFunction(count => (window.sockets.at(-1).messages || []).map(m => JSON.parse(m)).filter(m => m.mime_type === 'audio/pcm;rate=16000').length > count, mutedReconnect.audioMessages);
+        const evidence = { source: app + '/components/audio-call-page-content.tsx', actualReact: require(path.join(app, 'node_modules/react/package.json')).version, actualBrowser: await browser.version(), boundary: 'Actual component/React/browser AudioContext/worklets/fake microphone; routing/UI siblings and websocket transport controlled. One PCM callback is injected synchronously during source connection to exercise the pre-effect mute race; resume completion can be held for the unmount case. No model/backend call.', before, after, routing, mutedReconnect, errors };
         assert.equal(after.alert, null, 'notification reconnect must preserve active contexts');
         assert.equal(after.contexts.length, 2);
         assert.ok(after.contexts.every(c => c.state === 'running'));
@@ -93,11 +118,35 @@ window.probeRoot=createRoot(document.getElementById('root'));window.probeRoot.re
         assert.ok(evidence.afterUnmount.contexts.every(s => s === 'closed'));
         assert.ok(evidence.afterUnmount.tracks.every(s => s === 'ended'));
         assert.ok(evidence.afterUnmount.sockets.every(s => s === 3));
+
+        const pending = await context.newPage();
+        pending.on('pageerror', e => errors.push(e.message));
+        await pending.goto(url);
+        await pending.evaluate(() => { window.holdAudioResume = true; });
+        await pending.getByRole('button', { name: 'Start audio conversation' }).click();
+        await pending.waitForFunction(() => window.contexts.length === 2 && window.resumeResolvers.length === 2);
+        await pending.evaluate(() => window.probeRoot.unmount());
+        await pending.waitForTimeout(100);
+        const beforeResume = await pending.evaluate(() => window.contexts.map(c => c.state));
+        await pending.evaluate(() => window.resumeResolvers.forEach(resolve => resolve()));
+        await pending.waitForTimeout(100);
+        evidence.pendingStartupUnmount = await pending.evaluate(() => ({ contexts: window.contexts.map(c => c.state), sockets: window.sockets.length, streams: window.probeStreams.length }));
+        evidence.pendingStartupUnmount.beforeResume = beforeResume;
+        await pending.close();
         assert.deepEqual(errors, []);
-        evidence.status = 'PASS';
+        const failures = [];
+        if (routing.backend !== 1 || JSON.stringify(routing.payload) !== JSON.stringify([0, 0, 1, 0, 2, 0, 3, 0])) failures.push('backend-shaped PCM must reach the player');
+        if (routing.incompatibleRate !== 0 || routing.bare !== 1) failures.push('PCM rate validation must retain bare compatibility');
+        assert.equal(mutedReconnect.earlyEvents.length, 1, 'the mute race must actually be exercised');
+        assert.equal(mutedReconnect.earlyEvents[0].muted, true, 'the callback must occur while the UI is muted');
+        if (mutedReconnect.audioMessages !== 0) failures.push('muted reconnect must not transmit PCM before the effect runs');
+        if (!beforeResume.every(s => s === 'closed') || !evidence.pendingStartupUnmount.contexts.every(s => s === 'closed') || evidence.pendingStartupUnmount.sockets !== 0 || evidence.pendingStartupUnmount.streams !== 0) failures.push('pending startup must release contexts on unmount and never create a later session');
+        evidence.status = failures.length ? 'FAIL' : 'PASS';
+        evidence.failures = failures;
         if (process.env.AUDIO_TEST_RESULT)
             fs.writeFileSync(process.env.AUDIO_TEST_RESULT, JSON.stringify(evidence, null, 2) + '\n');
         console.log(JSON.stringify(evidence, null, 2));
+        assert.deepEqual(failures, []);
     }
     finally {
         if (browser)
