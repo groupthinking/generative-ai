@@ -4,13 +4,13 @@
 
 ### Environment Requirements
 
-1. Node.js 20+
+1. Node.js 20.9+ (Node 22 is used for validation)
 
 ### Dependencies
 
 Note: These dependencies can be automated by following the [deployment instructions](deploy.md).
 
-1. A Google Cloud Project with Billing, Vertex enabled
+1. A Google Cloud Project with Billing, Vertex AI enabled
 2. A [Google Maps API key](https://developers.google.com/maps/documentation/embed/get-api-key). This is required for autocomplete, routing, and static map generation
 3. Vertex AI enabled in your project
 
@@ -25,7 +25,7 @@ Copy `.env.example` to `.env` and populate it. The most important thing is a map
 Install genkit and Next.js dependencies:
 
 ```sh
-npm install
+npm ci
 ```
 
 ## Development Servers
@@ -35,10 +35,30 @@ npm install
 To start a genkit server, run the following:
 
 ```sh
-npx genkit@latest start
+npm run genkit:dev
 ```
 
-You can now access the Genkit console on [localhost:4000](http://localhost:4000).
+This uses the lockfile's pinned `genkit-cli` and `tsx` executables. The runtime
+loads the configured environment file, then imports `libs/genkit/flows.ts`, the
+same flow module used by the web application. The Genkit console is available
+on [localhost:4000](http://localhost:4000) (or the next free port printed by the
+CLI). The first launch downloads the matching UI assets and presents the CLI's
+analytics notice; internet access is required for that download. Select **Postcard Flow** to inspect its schema and run it. The Vertex AI and
+Ollama plugins and existing prompt files remain available.
+
+Registration does not run the map or model calls. Running a flow does use the
+configured Maps, Vertex AI/Ollama and telemetry services, so retain the credentials
+and project setup above. The developer tools are trusted local development
+services; they invoke the flow directly, outside the web application's Firebase
+request-authentication boundary. Do not expose their ports to an untrusted
+network. The old `genkit-tools.conf.js` harness configuration is retained for
+reference; the explicit runtime command is what registers the current flow.
+
+Stop the development command with Ctrl-C. `npm test` includes a real CLI and
+registration and CLI-to-runtime API smoke test plus controlled provider adapters
+that exercise the existing prompts without paid service calls. These checks do
+not exercise the downloaded browser UI or call live cloud services. This does not replace
+testing with your actual cloud credentials.
 
 ### Next.js
 

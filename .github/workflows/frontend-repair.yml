@@ -1,0 +1,118 @@
+name: Frontend repair validation
+
+on:
+  pull_request:
+    paths:
+      - "gemini/autocal/frontend/**"
+      - "genkit/postcard-generator/**"
+      - "gemini/multimodal-live-api/native-audio-websocket-demo-apps/wealth-advisor/src/frontend/**"
+      - ".github/workflows/frontend-repair.yml"
+      - ".github/scripts/check-native-next-image.cjs"
+      - ".github/testing/audio-browser/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: frontend-repair-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  CI: "true"
+  NEXT_TELEMETRY_DISABLED: "1"
+
+jobs:
+  frontend:
+    name: Frontend validation (${{ matrix.id }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - id: autocal
+            path: gemini/autocal/frontend
+            tests: false
+          - id: postcard
+            path: genkit/postcard-generator
+            tests: true
+          - id: wealth
+            path: gemini/multimodal-live-api/native-audio-websocket-demo-apps/wealth-advisor/src/frontend
+            tests: true
+    defaults:
+      run:
+        working-directory: ${{ matrix.path }}
+    env:
+      # Build-only values. No provider credentials or live model calls are used.
+      GOOGLE_MAPS_API_SERVER_KEY: controlled-build-placeholder
+      GOOGLE_CLOUD_PROJECT: controlled-build-project
+      NEXT_PUBLIC_CLIENT_ID: controlled-client-id
+      CLIENT_SECRET: controlled-build-placeholder
+      ENCRYPTION_KEY: "00000000000000000000000000000000"
+      ENV_FILE_LOCATION: /nonexistent/frontend-repair.env
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "22.23.4"
+          cache: npm
+          cache-dependency-path: ${{ matrix.path }}/package-lock.json
+      - name: Pin npm
+        run: npm install --global npm@10.9.9
+      - name: Frozen install
+        run: npm ci --no-audit --no-fund
+      - name: Application tests
+        if: matrix.tests
+        run: npm test
+      - name: Typecheck
+        run: node node_modules/typescript/bin/tsc --noEmit
+      - name: Lint
+        run: npm run lint
+      - name: Production build
+        run: npm run build
+      - name: Verify actual native image optimizer
+        run: node "$GITHUB_WORKSPACE/.github/scripts/check-native-next-image.cjs"
+      - name: Install pinned browser test tools
+        if: matrix.id == 'wealth'
+        run: npm ci --prefix "$GITHUB_WORKSPACE/.github/testing/audio-browser" --ignore-scripts --no-audit --no-fund
+      - name: Install pinned Chromium and system libraries
+        if: matrix.id == 'wealth'
+        run: node "$GITHUB_WORKSPACE/.github/testing/audio-browser/node_modules/playwright/cli.js" install --with-deps chromium
+      - name: Audio session browser regression
+        if: matrix.id == 'wealth'
+        run: node tests/audio-session.browser.cjs
+
+  dependency-audit:
+    name: Full dependency audit (${{ matrix.id }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - id: autocal
+            path: gemini/autocal/frontend
+          - id: postcard
+            path: genkit/postcard-generator
+          - id: wealth
+            path: gemini/multimodal-live-api/native-audio-websocket-demo-apps/wealth-advisor/src/frontend
+          - id: audio-browser-tools
+            path: .github/testing/audio-browser
+    defaults:
+      run:
+        working-directory: ${{ matrix.path }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "22.23.4"
+          cache: npm
+          cache-dependency-path: ${{ matrix.path }}/package-lock.json
+      - name: Pin npm
+        run: npm install --global npm@10.9.9
+      - name: Frozen audit graph including development dependencies
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Enforce full high-severity audit
+        # This remains a real failing check while known high findings remain.
+        run: npm audit --audit-level=high

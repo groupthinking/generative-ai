@@ -20,6 +20,7 @@ import { useSearchParams } from "next/navigation"
 import { getWebSocketUrl, getSessionId } from "@/lib/config"
 import { startAudioPlayerWorklet } from "@/lib/audio-player"
 import { startAudioRecorderWorklet } from "@/lib/audio-recorder"
+import { acceptsPcmAudio } from "@/lib/audio-mime"
 import { AudioCallInterface, Message } from "@/components/audio-call-interface"
 import {
   AppointmentScheduler,
@@ -37,6 +38,11 @@ import StatusBar from "@/components/StatusBar"
 
 export default function AudioCallPageContent() {
   const [isAudio, setIsAudio] = useState(false)
+  const [audioError, setAudioError] = useState<string | null>(null)
+  const startingAudio = useRef(false)
+  const mounted = useRef(true)
+  const ownedAudioContexts = useRef(new Set<AudioContext>())
+  const audioResources = useRef<{ ws?: WebSocket; player?: AudioWorkletNode; recorder?: AudioWorkletNode; stream?: MediaStream }>({})
   const [notificationText, setNotificationText] = useState<string | undefined>()
   const [transcription, setTranscription] = useState<{ user: string; agent: string }>({ user: '', agent: '' })
   const [showScheduler, setShowScheduler] = useState(false)
@@ -50,12 +56,12 @@ export default function AudioCallPageContent() {
   const [, setAudioRecorderNode] = useState<AudioWorkletNode | null>(null)
   const [micStream, setMicStream] = useState<MediaStream | null>(null)
   const [isUserMuted, setIsUserMuted] = useState(false)
+  const isUserMutedRef = useRef(false)
   const [inputAudioContext, setInputAudioContext] = useState<AudioContext | null>(null)
   const [outputAudioContext, setOutputAudioContext] = useState<AudioContext | null>(null)
   const audioQueue = useRef<ArrayBuffer[]>([])
   const websocketRef = useRef<WebSocket | null>(null)
   const audioPlayerNodeRef = useRef<AudioWorkletNode | null>(null)
-  audioPlayerNodeRef.current = audioPlayerNode
   const currentUserMessageIdRef = useRef<string | null>(null)
   const currentAgentMessageIdRef = useRef<string | null>(null)
   const isInterruptedRef = useRef<boolean>(false)
@@ -66,37 +72,60 @@ export default function AudioCallPageContent() {
   const isEffectivelyMuted = isUserMuted
   const searchParams = useSearchParams()
 
+  const closeAudioContext = useCallback((context: AudioContext) => {
+    if (ownedAudioContexts.current.delete(context) && context.state !== "closed") {
+      void context.close().catch(error => console.error("Audio Context cleanup failed:", error))
+    }
+  }, [])
+
+  useEffect(() => {
+    mounted.current = true
+    const contexts = ownedAudioContexts.current
+    return () => {
+      mounted.current = false
+      contexts.forEach(closeAudioContext)
+    }
+  }, [closeAudioContext])
+
   const startConversation = useCallback(async (notificationText?: string) => {
-    if (isAudio) return
+    if (isAudio || startingAudio.current) return
+    startingAudio.current = true
     if (notificationText) {
       setNotificationText(notificationText)
     }
+    isUserMutedRef.current = false
     setIsUserMuted(false)
+    setAudioError(null)
     
+    let inputContext: AudioContext | undefined
+    let outputContext: AudioContext | undefined
     try {
-      // Removed Avatar initialization
-      const inputContext = new AudioContext({ sampleRate: 16000 })
-      if (inputContext.state === "suspended") {
-        await inputContext.resume()
-      }
+      // Create contexts at the rates expected by the backend.
+      inputContext = new AudioContext({ sampleRate: 16000 })
+      ownedAudioContexts.current.add(inputContext)
+      outputContext = new AudioContext({ sampleRate: 24000 })
+      ownedAudioContexts.current.add(outputContext)
+      await Promise.all([inputContext.resume(), outputContext.resume()])
+      if (!mounted.current || !ownedAudioContexts.current.has(inputContext) || !ownedAudioContexts.current.has(outputContext)) return
       setInputAudioContext(inputContext)
-
-      const outputContext = new AudioContext({ sampleRate: 24000 })
-      if (outputContext.state === "suspended") {
-        await outputContext.resume()
-      }
       setOutputAudioContext(outputContext)
 
       setIsAudio(true)
     } catch (error) {
-      console.error("Audio Context initialization failed:", error)
+      if (inputContext) closeAudioContext(inputContext)
+      if (outputContext) closeAudioContext(outputContext)
+      if (mounted.current) {
+        setAudioError(error instanceof Error ? error.message : "Audio initialization failed")
+        console.error("Audio Context initialization failed:", error)
+      }
+    } finally {
+      startingAudio.current = false
     }
-  }, [isAudio]);
+  }, [isAudio, closeAudioContext]);
 
   useEffect(() => {
-    const notificationText = searchParams.get('notification_text');
-    startConversation(notificationText || undefined);
-  }, [searchParams, startConversation]);
+    setNotificationText(searchParams.get('notification_text') || undefined);
+  }, [searchParams]);
 
   useEffect(() => {
     if (micStream) {
@@ -174,6 +203,8 @@ export default function AudioCallPageContent() {
   }
 
   const audioRecorderHandler = useCallback((pcmData: ArrayBuffer, ws: WebSocket) => {
+    // A new worklet can emit before the effect disables its microphone track.
+    if (isUserMutedRef.current || websocketRef.current !== ws) return
     sendMessage(
       {
         mime_type: "audio/pcm;rate=16000",
@@ -184,34 +215,42 @@ export default function AudioCallPageContent() {
   }, [])
 
   const stopAudioPlayer = useCallback(() => {
-    // If we had a local player to stop, we'd do it here. 
-    // Since we removed Avatar.speak(), we rely on the AudioWorklet to just stop receiving data.
-    // We might want to clear the buffer on the worklet side via a message if latency is high.
+    audioPlayerNodeRef.current?.port.postMessage({ command: "stopAudio" })
   }, [])
 
-  const startAudio = useCallback((ws: WebSocket, inputContext: AudioContext, outputContext: AudioContext) => {
-    startAudioPlayerWorklet(outputContext).then((result) => {
-      const [node] = result as [AudioWorkletNode, AudioContext]
-      setAudioPlayerNode(node)
-    })
-    startAudioRecorderWorklet(
-      inputContext,
-      (pcmData: ArrayBuffer) => audioRecorderHandler(pcmData, ws),
-      stopAudioPlayer,
-      setIsUserSpeaking,
-    ).then((result) => {
-      const [node, , stream] = result as [
-        AudioWorkletNode,
-        AudioContext,
-        MediaStream,
-      ]
-      setAudioRecorderNode(node)
+  const startAudio = useCallback(async (ws: WebSocket, inputContext: AudioContext, outputContext: AudioContext) => {
+    try {
+      const [player] = await startAudioPlayerWorklet(outputContext)
+      if (ws.readyState !== WebSocket.OPEN || websocketRef.current !== ws) { player.disconnect(); return }
+      audioResources.current.player = player
+      audioPlayerNodeRef.current = player
+      setAudioPlayerNode(player)
+      const [recorder, , stream] = await startAudioRecorderWorklet(
+        inputContext,
+        (pcmData: ArrayBuffer) => audioRecorderHandler(pcmData, ws),
+        stopAudioPlayer,
+        setIsUserSpeaking,
+      )
+      if (ws.readyState !== WebSocket.OPEN || websocketRef.current !== ws) {
+        recorder.disconnect()
+        stream.getTracks().forEach(track => track.stop())
+        return
+      }
+      audioResources.current.recorder = recorder
+      audioResources.current.stream = stream
+      setAudioRecorderNode(recorder)
       setMicStream(stream)
-    })
-  }, [audioRecorderHandler, stopAudioPlayer]); // Close startAudio useCallback properly
+    } catch (error) {
+      if (websocketRef.current !== ws) return
+      setAudioError(error instanceof Error ? error.message : "Microphone capture failed")
+      setIsAudio(false)
+      ws.close()
+    }
+  }, [audioRecorderHandler, stopAudioPlayer])
 
   const toggleMute = () => {
-    setIsUserMuted((prevState) => !prevState)
+    isUserMutedRef.current = !isUserMutedRef.current
+    setIsUserMuted(isUserMutedRef.current)
   }
 
   useEffect(() => {
@@ -221,6 +260,16 @@ export default function AudioCallPageContent() {
     }
   }, [audioPlayerNode]);
 
+  // Notification changes reconnect the socket but retain this session's contexts.
+  // Close contexts only when the session stops, replaces them, or unmounts.
+  useEffect(() => {
+    if (!isAudio || !inputAudioContext || !outputAudioContext) return
+    return () => {
+      closeAudioContext(inputAudioContext)
+      closeAudioContext(outputAudioContext)
+    }
+  }, [isAudio, inputAudioContext, outputAudioContext, closeAudioContext])
+
   useEffect(() => {
     if (isAudio && inputAudioContext && outputAudioContext) {
       const sessionId = getSessionId();
@@ -228,11 +277,13 @@ export default function AudioCallPageContent() {
       let url = `${ws_url}/${sessionId}?is_audio=False`;
       if (notificationText) {
         url += `&notification_text=${encodeURIComponent(notificationText)}`;
-        setNotificationText(undefined);
       }
       console.log(`Attempting to connect to WebSocket at: ${url}`);
       const ws = new WebSocket(url);
       websocketRef.current = ws;
+      audioResources.current = { ws };
+      audioQueue.current = [];
+      isInterruptedRef.current = false;
 
       ws.onopen = () => {
         console.log("WebSocket connection opened.");
@@ -309,7 +360,7 @@ export default function AudioCallPageContent() {
           }
         }
 
-        if (message_from_server.mime_type == "audio/pcm") {
+        if (acceptsPcmAudio(message_from_server.mime_type, outputAudioContext.sampleRate)) {
           if (isInterruptedRef.current) {
             return
           }
@@ -352,15 +403,28 @@ export default function AudioCallPageContent() {
       ws.onclose = (event) => {
         console.log("WebSocket connection closed.", event.code, event.reason)
         setIsAgentSpeaking(false)
+        setIsAudio(false)
+        setAudioError(previous => previous || "The audio connection closed. Retry to reconnect.")
       }
 
       ws.onerror = (e) => {
         console.log("WebSocket error: ", e)
+        setAudioError("Unable to connect to the audio service. Retry to reconnect.")
       }
 
       return () => {
+        // Ignore late events from a socket being replaced or unmounted.
+        ws.onopen = ws.onmessage = ws.onclose = ws.onerror = null
         ws.close()
-        websocketRef.current = null
+        if (websocketRef.current === ws) websocketRef.current = null
+        if (audioResources.current.ws === ws) {
+          audioResources.current.stream?.getTracks().forEach(track => track.stop())
+          audioResources.current.recorder?.disconnect()
+          audioResources.current.player?.disconnect()
+          audioResources.current = {}
+          audioPlayerNodeRef.current = null
+        }
+        audioQueue.current = []
       }
     }
   }, [isAudio, inputAudioContext, outputAudioContext, notificationText, startAudio]);
@@ -399,6 +463,15 @@ export default function AudioCallPageContent() {
 
   return (
     <div className="audio-call-container">
+      {audioError && <div role="alert" className="absolute left-4 right-4 top-24 z-[60] bg-red-950 p-4 text-white">
+        {audioError}
+        <button className="ml-4 underline" onClick={() => startConversation(notificationText)}>Retry audio</button>
+      </div>}
+      {!isAudio && !audioError && <div className="absolute left-4 right-4 top-24 z-[60] p-4 text-center">
+        <button className="rounded bg-white px-4 py-2 text-black" onClick={() => startConversation(notificationText)}>
+          Start audio conversation
+        </button>
+      </div>}
       <StatusBar />
       <div
         style={{

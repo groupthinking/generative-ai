@@ -21,14 +21,18 @@ export PROJECT_ID="my-project-id"
 cd terraform
 terraform init && terraform apply -var="project_id=${PROJECT_ID}"
 cd ..
-npm install
+npm ci
 ```
 
 #### Running in Genkit
 
+First configure the Maps key and other environment variables in the
+[local development guide](local.md). The developer tools use the shared postcard
+flow and require the same provider configuration as the app.
+
 ```sh
-export PROJECT_ID="my-project-id"
-npx genkit@latest start
+export GOOGLE_CLOUD_PROJECT="my-project-id"
+npm run genkit:dev
 ```
 
 Then navigate to [localhost:4000](http://localhost:4000).

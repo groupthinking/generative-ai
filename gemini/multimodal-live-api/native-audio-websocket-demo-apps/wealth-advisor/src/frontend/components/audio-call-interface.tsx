@@ -277,7 +277,7 @@ export function AudioCallInterface({
                                 // This case should not be hit if the logic in useEffect is correct
                                 return null;
                               case "financial_summary_visual":
-                                return <FinancialSummary summary={visual.data as FinancialSummaryData} onClose={() => {}} />;
+                                return <FinancialSummary summary={visual.data as FinancialSummaryData} />;
                               case "stock_performance_visual":
                                 return <StockPerformanceVisual data={visual.data as StockPerformanceData} />;
                               default:
