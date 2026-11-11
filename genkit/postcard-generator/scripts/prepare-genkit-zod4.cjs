@@ -40,6 +40,6 @@ const plan = patches.map(patch => {
 }).filter(Boolean);
 for (const { target, after } of plan) fs.writeFileSync(target, after);
 for (const patch of patches) {
-  if (hash(fs.readFileSync(resolve(patch.path))) !== patch.afterSha256) throw new Error(`Patch readback failed: ${patch.path}`);
+  if (hash(fs.readFileSync(resolve(patch.path))) !== patch.afterSha256) throw new Error(`Patch verification failed: ${patch.path}`);
 }
 console.log(`Verified Zod 4 compatibility in ${patches.length} pinned Genkit files (${plan.length} updated).`);
