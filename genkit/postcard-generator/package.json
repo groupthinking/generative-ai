@@ -9,7 +9,8 @@
     "genkit:dev": "genkit start -- tsx libs/genkit/dev.ts",
     "build-service-worker": "esbuild auth-serviceworker.ts --minify --bundle --outfile=public/auth-service-worker.js",
     "lint": "next lint",
-    "test": "node --test tests/*.test.cjs"
+    "test": "node --test tests/*.test.cjs",
+    "postinstall": "node scripts/prepare-genkit-zod4.cjs"
   },
   "name": "postcards",
   "version": "0.1.0",
@@ -40,7 +41,7 @@
     "react-dom": "^18",
     "react-markdown": "^9.0.1",
     "simplify-js": "^1.2.4",
-    "zod": "^3.23.8"
+    "zod": "4.6.7"
   },
   "devDependencies": {
     "@eslint/compat": "^1.1.1",
@@ -81,7 +82,9 @@
     },
     "@google-cloud/opentelemetry-cloud-trace-exporter@2.4.1": {
       "@grpc/grpc-js": "1.14.6"
-    }
+    },
+    "zod": "$zod",
+    "@asteasolutions/zod-to-openapi": "9.1.0"
   },
   "engines": {
     "node": ">=20.9.0"

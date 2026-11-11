@@ -1,0 +1,884 @@
+{
+  "purpose": "Scoped Genkit migration to official Zod 4.6.7; no Zod3 runtime replacement or audit exceptions",
+  "versions": {
+    "@genkit-ai/core": "1.0.4",
+    "@genkit-ai/tools-common": "1.45.0",
+    "@genkit-ai/telemetry-server": "1.45.0",
+    "genkit-cli": "1.45.0"
+  },
+  "patches": [
+    {
+      "path": "@genkit-ai/core/lib/index.js",
+      "beforeSha256": "accdcfa5fa424a82fa5ec4dd4f91ee2f5be3a22ad4eb070e7296678d8562f089",
+      "afterSha256": "3b53a98dea0171624530b91d6c91b31d42c3ad65ab95ab948b385ee02e9e8f8b",
+      "changes": [
+        {
+          "before": "require(\"zod\")",
+          "after": "require(\"../../../../scripts/genkit-zod4-compat.cjs\")",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "path": "@genkit-ai/core/lib/index.mjs",
+      "beforeSha256": "4dc871e78fefc20f3bf0656415431bc67e1d3f0c06bc2a1df93758a84a5d4f7b",
+      "afterSha256": "ed635f84d6b8a5af4a7c9517ac1677c226480ec6365418dfc73c2e971cd1082f",
+      "changes": [
+        {
+          "before": "from \"zod\"",
+          "after": "from \"../../../../scripts/genkit-zod4-compat.cjs\"",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "path": "@genkit-ai/core/lib/reflection.js",
+      "beforeSha256": "54c4ba69a22fb378ffb864a3612f62dc930180b257b05bec54232b7927d87a9d",
+      "afterSha256": "4d882ce9a5c135783014365b2277fc89fa33c1774017c6273ffa34f0ade4d086",
+      "changes": [
+        {
+          "before": "require(\"zod\")",
+          "after": "require(\"../../../../scripts/genkit-zod4-compat.cjs\")",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "path": "@genkit-ai/core/lib/reflection.mjs",
+      "beforeSha256": "6a1e4d847b904706811bc70db3b63b48a6d2f112e209fa7540676e7c923de8b6",
+      "afterSha256": "f4ba9b283a9d851d19103757c5b6812b3f3fbe5ac21e2434da97852ca331192f",
+      "changes": [
+        {
+          "before": "import * as z from \"zod\"",
+          "after": "import { z } from \"../../../../scripts/genkit-zod4-compat.cjs\"",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "path": "@genkit-ai/core/lib/schema.js",
+      "beforeSha256": "d4271551a0a5333677526d9958eabd667a5d4a5d80ee38b7de90c683cf3832c2",
+      "afterSha256": "a26cbd7451cf0243b563d696adbd686562f830e29c956af23f3dbde86ad06e31",
+      "changes": [
+        {
+          "before": "require(\"zod\")",
+          "after": "require(\"../../../../scripts/genkit-zod4-compat.cjs\")",
+          "count": 1
+        },
+        {
+          "before": "require(\"zod-to-json-schema\")",
+          "after": "require(\"../../../../scripts/genkit-json-schema.cjs\")",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "path": "@genkit-ai/core/lib/schema.mjs",
+      "beforeSha256": "19469ce0a6dc05b6160a4802ef5851af50392896b27707c5c035f6c8df918531",
+      "afterSha256": "03146e928ab858c8d2a62c88411a2862358c24d00d348e9336c1306f99a1e924",
+      "changes": [
+        {
+          "before": "from \"zod\"",
+          "after": "from \"../../../../scripts/genkit-zod4-compat.cjs\"",
+          "count": 1
+        },
+        {
+          "before": "from \"zod-to-json-schema\"",
+          "after": "from \"../../../../scripts/genkit-json-schema.cjs\"",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "path": "@genkit-ai/core/lib/statusTypes.js",
+      "beforeSha256": "ffe155d9b58e444481af248bca1f28f5ec9e55d4fb3c9677cc7863af6cab1bf5",
+      "afterSha256": "07efbdb45970ca24080adac46a5f31c381de215f2f0842263b56c3b2796976c3",
+      "changes": [
+        {
+          "before": "require(\"zod\")",
+          "after": "require(\"../../../../scripts/genkit-zod4-compat.cjs\")",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "path": "@genkit-ai/core/lib/statusTypes.mjs",
+      "beforeSha256": "af45cc0d651a0a1928f4a8004391c950cadded06ca3ba6b8e3b59cafba76b21c",
+      "afterSha256": "d236ada193c470759d8dc58cd53ca9733cdaed264ece99b8a3978c948dbc7d7f",
+      "changes": [
+        {
+          "before": "import * as z from \"zod\"",
+          "after": "import { z } from \"../../../../scripts/genkit-zod4-compat.cjs\"",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "path": "@genkit-ai/core/lib/tracing/types.js",
+      "beforeSha256": "44c98afcbb748ede6477d1d5caa753740a27233ee4a9206aaf6ed3a87d83b040",
+      "afterSha256": "c353c789faf7b9cb142105bc5ee2d0c2d93e722c4f72cb1d3bb240d9da0a16e1",
+      "changes": [
+        {
+          "before": "require(\"zod\")",
+          "after": "require(\"../../../../../scripts/genkit-zod4-compat.cjs\")",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "path": "@genkit-ai/core/lib/tracing/types.mjs",
+      "beforeSha256": "3eb4ef6df050e65e2f91623453d5624e0345df37888de6c28fbe82c6db1e3950",
+      "afterSha256": "9f737c972412be0d8da8ad3b13496cda7faaf007a2e0e2261cfa8652a826d314",
+      "changes": [
+        {
+          "before": "from \"zod\"",
+          "after": "from \"../../../../../scripts/genkit-zod4-compat.cjs\"",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "path": "@genkit-ai/tools-common/lib/cjs/src/api/reflection.js",
+      "beforeSha256": "8b19875906789b10e4315ddc87a93a22643243bf3734df8ab94338fc73438e33",
+      "afterSha256": "bd747e8d817ad6e7b12706cfa2a8c3cf4b5fb168d02b186b53ad9a09c2615bfe",
+      "changes": [
+        {
+          "before": "require(\"zod\")",
+          "after": "require(\"../../../../../../../scripts/genkit-zod4-compat.cjs\")",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "path": "@genkit-ai/tools-common/lib/cjs/src/eval/evaluate.js",
+      "beforeSha256": "071b2ffee766bf9c1f4ea08766bb711b8be16efa4e0f245067763ac64bb4b418",
+      "afterSha256": "a71d03e2bc237ee731918e7e96e0674fb2ba3ba11cb54531300270e52c086a19",
+      "changes": [
+        {
+          "before": "require(\"zod\")",
+          "after": "require(\"../../../../../../../scripts/genkit-zod4-compat.cjs\")",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "path": "@genkit-ai/tools-common/lib/cjs/src/plugin/config.js",
+      "beforeSha256": "ca824a973e0338873598ddcd8d50c1ce9ae1cfc0c282efa6b7f56601232d64b5",
+      "afterSha256": "5f4a3bfb3afbff796255de582685e683c47cbb23ef7da2c112c05142292ca318",
+      "changes": [
+        {
+          "before": "require(\"zod\")",
+          "after": "require(\"../../../../../../../scripts/genkit-zod4-compat.cjs\")",
+          "count": 1
+        },
+        {
+          "before": "zod_1.z.function().args(trace_1.TraceDataSchema).returns(zod_1.z.any())",
+          "after": "zod_1.z.custom(value => typeof value === \"function\").transform(fn => zod_1.z.function({ input: zod_1.z.tuple([trace_1.TraceDataSchema]).rest(zod_1.z.unknown()), output: zod_1.z.any() }).implement(fn))",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "path": "@genkit-ai/tools-common/lib/cjs/src/plugin/plugins.js",
+      "beforeSha256": "c758a718028038e497bb99be2d195a1e3e4621f070d97dea63493689f9a8673f",
+      "afterSha256": "e4d9c988a6f0f0b7dfbd3a4ff72c1bcf7091321e52cc9ec72d76b669604641f8",
+      "changes": [
+        {
+          "before": "require(\"zod\")",
+          "after": "require(\"../../../../../../../scripts/genkit-zod4-compat.cjs\")",
+          "count": 1
+        },
+        {
+          "before": "zod_1.z\n        .function()\n        .args(zod_1.z.optional(zod_1.z.record(zod_1.z.string(), SupportedFlagValuesSchema)))\n        .returns(zod_1.z.union([zod_1.z.void(), zod_1.z.promise(zod_1.z.void())]))",
+          "after": "zod_1.z.custom(value => typeof value === \"function\").transform(hook => function (...args) {\n        const parsed = zod_1.z.tuple([zod_1.z.optional(zod_1.z.record(zod_1.z.string(), SupportedFlagValuesSchema))]).rest(zod_1.z.unknown()).parse(args);\n        const result = Reflect.apply(hook, this, parsed);\n        if (result && typeof result.then === \"function\" && typeof result.catch === \"function\") {\n            return zod_1.z.promise(zod_1.z.void()).parseAsync(result);\n        }\n        return zod_1.z.void().parse(result);\n    })",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "path": "@genkit-ai/tools-common/lib/cjs/src/server/router.js",
+      "beforeSha256": "b20abc3432389b0a094b6ad4942846f8fe2ac399eb9e958391b2c54d405e9630",
+      "afterSha256": "454f014f5841946f137f4e5252e069447927b96964f61e04a78810378f3e493a",
+      "changes": [
+        {
+          "before": "require(\"zod\")",
+          "after": "require(\"../../../../../../../scripts/genkit-zod4-compat.cjs\")",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "path": "@genkit-ai/tools-common/lib/cjs/src/types/action.js",
+      "beforeSha256": "80e099dc366c85001a57234a51d0db127026bc1c96fd28e5945799cc9e702084",
+      "afterSha256": "0cff5f88b8b931fcd05c8dbc58ab887fd55e753badd53aced1e633fbab3df53e",
+      "changes": [
+        {
+          "before": "require(\"zod\")",
+          "after": "require(\"../../../../../../../scripts/genkit-zod4-compat.cjs\")",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "path": "@genkit-ai/tools-common/lib/cjs/src/types/agent.js",
+      "beforeSha256": "94d3440bfb32f3aa3b61822a331d3faca50ffd93e81f7c27b4a7faa48fbb5a2d",
+      "afterSha256": "6f598aac7de77fe63b75c171d6b80327e209dd04ff97ca2b5a2238ef546213ab",
+      "changes": [
+        {
+          "before": "require(\"zod\")",
+          "after": "require(\"../../../../../../../scripts/genkit-zod4-compat.cjs\")",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "path": "@genkit-ai/tools-common/lib/cjs/src/types/agents-conformance.js",
+      "beforeSha256": "518dbde3413b656e31d10963e3559ff03a8d0ed0156c709ee13469b7dcab8f3d",
+      "afterSha256": "6ddd51ed9cf5313370f6d79cea69a9bbafeb35587c9b355053d31a623723b454",
+      "changes": [
+        {
+          "before": "require(\"zod\")",
+          "after": "require(\"../../../../../../../scripts/genkit-zod4-compat.cjs\")",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "path": "@genkit-ai/tools-common/lib/cjs/src/types/analytics.js",
+      "beforeSha256": "f548039b2bfeb257dea176c96f9515ee7fc16e2733f5496f6c14812b492fcf4e",
+      "afterSha256": "d464145d46927698cbba2566e7ae62579973695f60b8c0f1b5f672913e47508a",
+      "changes": [
+        {
+          "before": "require(\"zod\")",
+          "after": "require(\"../../../../../../../scripts/genkit-zod4-compat.cjs\")",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "path": "@genkit-ai/tools-common/lib/cjs/src/types/apis.js",
+      "beforeSha256": "886a84eb17f91ad861651d4d469757f8192c084a067d70c78559d4e466956826",
+      "afterSha256": "b858194614c9a3eee81ab230317d115b33b09e46e4b785dfb9086e224a54353e",
+      "changes": [
+        {
+          "before": "require(\"zod\")",
+          "after": "require(\"../../../../../../../scripts/genkit-zod4-compat.cjs\")",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "path": "@genkit-ai/tools-common/lib/cjs/src/types/document.js",
+      "beforeSha256": "dd5f7026b17d7b961c6a769eac6a70dce4cf9502aaaf41ba37dd881950a2d282",
+      "afterSha256": "227e62eeddd2be7a230836461c4a1fbac9610f98f05d3823a3e7916db0f54b20",
+      "changes": [
+        {
+          "before": "require(\"zod\")",
+          "after": "require(\"../../../../../../../scripts/genkit-zod4-compat.cjs\")",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "path": "@genkit-ai/tools-common/lib/cjs/src/types/embedder.js",
+      "beforeSha256": "39085c80752a39627bce5ea7401deb686d3816abef941be4b8d86d81ffd23706",
+      "afterSha256": "c040a7189460782f8ed152ddac451fa4572cc5e91e276719d6f7c982fa393bb0",
+      "changes": [
+        {
+          "before": "require(\"zod\")",
+          "after": "require(\"../../../../../../../scripts/genkit-zod4-compat.cjs\")",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "path": "@genkit-ai/tools-common/lib/cjs/src/types/error.js",
+      "beforeSha256": "e8425f634cccb86ad45f805d4cbed942f2bd02ea54afe0bc70b1275bc7c00d02",
+      "afterSha256": "739c65f0f883b02a7e3b73c55d4b1285b48770a20ab5ba9b05311f646a3c30b3",
+      "changes": [
+        {
+          "before": "require(\"zod\")",
+          "after": "require(\"../../../../../../../scripts/genkit-zod4-compat.cjs\")",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "path": "@genkit-ai/tools-common/lib/cjs/src/types/eval.js",
+      "beforeSha256": "9f408be49d0c6d6ea087e7eefcd7188b25ac58b20c82122e7312bf08df5f6b8d",
+      "afterSha256": "1d22ae216cb179dd1bc09b24385e222c38d781ab5559ae87d2b2414adb31b3f6",
+      "changes": [
+        {
+          "before": "require(\"zod\")",
+          "after": "require(\"../../../../../../../scripts/genkit-zod4-compat.cjs\")",
+          "count": 1
+        },
+        {
+          "before": "require(\"zod-to-json-schema\")",
+          "after": "require(\"../../../../../../../scripts/genkit-json-schema.cjs\")",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "path": "@genkit-ai/tools-common/lib/cjs/src/types/evaluator.js",
+      "beforeSha256": "b53bea7bccededa51e717853abe41f9c4b14548bf999c3bfe97b02d1d0cdc73e",
+      "afterSha256": "c7acffe69aae3422f1441b2c0ddca20d759305c571e39d8e90fd90935fa15669",
+      "changes": [
+        {
+          "before": "require(\"zod\")",
+          "after": "require(\"../../../../../../../scripts/genkit-zod4-compat.cjs\")",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "path": "@genkit-ai/tools-common/lib/cjs/src/types/log.js",
+      "beforeSha256": "200cf9e65ee22ee909c479f51029f3d232edf302ada76b5ae67c6cfeff69989e",
+      "afterSha256": "af3df0b41e6d21b6c6048730e9a4779e025d0555f7ed1a475a8b5d2bbfe1aa4b",
+      "changes": [
+        {
+          "before": "require(\"zod\")",
+          "after": "require(\"../../../../../../../scripts/genkit-zod4-compat.cjs\")",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "path": "@genkit-ai/tools-common/lib/cjs/src/types/middleware.js",
+      "beforeSha256": "3c9775fa8b2f6a2fd6cd58ba55348fe3881809d96615d013f9f66aab50f4b0d2",
+      "afterSha256": "d6c15a2295f00188284476492b184127d35cb544790d2e41757031c53645955e",
+      "changes": [
+        {
+          "before": "require(\"zod\")",
+          "after": "require(\"../../../../../../../scripts/genkit-zod4-compat.cjs\")",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "path": "@genkit-ai/tools-common/lib/cjs/src/types/model.js",
+      "beforeSha256": "d83147619199b18e857e53e525db2fc54312b07e2791da7dc9aa01ca654f1f2d",
+      "afterSha256": "07c7de4924f236e802da243fe86aafbd1f8943adc2cffaa79887f0af611a6707",
+      "changes": [
+        {
+          "before": "require(\"zod\")",
+          "after": "require(\"../../../../../../../scripts/genkit-zod4-compat.cjs\")",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "path": "@genkit-ai/tools-common/lib/cjs/src/types/parts.js",
+      "beforeSha256": "976930eb3236ba39e0e5bb96bc60f3eb8c27437f2fa83882b237ee60a3d56eb6",
+      "afterSha256": "1a5aabdaee13097973c88a3779ec6cf5b6a7ad8d95f30520ec4884779a82d81e",
+      "changes": [
+        {
+          "before": "require(\"zod\")",
+          "after": "require(\"../../../../../../../scripts/genkit-zod4-compat.cjs\")",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "path": "@genkit-ai/tools-common/lib/cjs/src/types/prompt.js",
+      "beforeSha256": "2342f7e1b43d5cdb2b5698066e23e9170b2a76cc10ebc8c82e7a344e3439e8dd",
+      "afterSha256": "76d288122d2b1cb66662946925ed2dcc779fa66438b71ca72ee6de5915a95dce",
+      "changes": [
+        {
+          "before": "require(\"zod\")",
+          "after": "require(\"../../../../../../../scripts/genkit-zod4-compat.cjs\")",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "path": "@genkit-ai/tools-common/lib/cjs/src/types/reflection.js",
+      "beforeSha256": "550171361a1c0a665079828db04eddfb385031d73543046f1f260a4519ea1954",
+      "afterSha256": "7c16ee9a043cee365496dacf83d992b90561a5a5bf85ad3fb155925903d425eb",
+      "changes": [
+        {
+          "before": "require(\"zod\")",
+          "after": "require(\"../../../../../../../scripts/genkit-zod4-compat.cjs\")",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "path": "@genkit-ai/tools-common/lib/cjs/src/types/reranker.js",
+      "beforeSha256": "584fac9f2d5bbfc42199a782f4d40b2a9d43bec679d39c58297999e0922af736",
+      "afterSha256": "44adc950557d294ce0ac9ed1479619ba045fc2d97ba0bfa241f60591c5eb8419",
+      "changes": [
+        {
+          "before": "require(\"zod\")",
+          "after": "require(\"../../../../../../../scripts/genkit-zod4-compat.cjs\")",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "path": "@genkit-ai/tools-common/lib/cjs/src/types/retriever.js",
+      "beforeSha256": "cf3d370e4aeeb6ceee1e7f41511aaba2a79663c1977d15132f53bf3243ef2431",
+      "afterSha256": "dec7c8e3fdfe4e68932a4050f7738e672b0c51a15940762da337a35e897738d7",
+      "changes": [
+        {
+          "before": "require(\"zod\")",
+          "after": "require(\"../../../../../../../scripts/genkit-zod4-compat.cjs\")",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "path": "@genkit-ai/tools-common/lib/cjs/src/types/status.js",
+      "beforeSha256": "e7d2748f3b4bbef4257e2f19a2f627eddfebe2338c29fb87f2346cddf683244b",
+      "afterSha256": "f9828fa55a399cd2ff700147b038af2c5ce35e4672b4b62f340622c1c43d8776",
+      "changes": [
+        {
+          "before": "require(\"zod\")",
+          "after": "require(\"../../../../../../../scripts/genkit-zod4-compat.cjs\")",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "path": "@genkit-ai/tools-common/lib/cjs/src/types/trace.js",
+      "beforeSha256": "c9dc7215cc1f80b910daf34054a4348893b62ebea7f52e229475235d6ec41be7",
+      "afterSha256": "c64d741f57812c9042b79ecef1eecec9c2733f99b64e9924c6652ad615b2d2cd",
+      "changes": [
+        {
+          "before": "require(\"zod\")",
+          "after": "require(\"../../../../../../../scripts/genkit-zod4-compat.cjs\")",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "path": "@genkit-ai/tools-common/lib/esm/src/api/reflection.js",
+      "beforeSha256": "7917ebe98a373e2d2701bd1e17cf6b9ca534b344d03609b236852d1287d914ce",
+      "afterSha256": "2cafcbd95d393904ecfad9611cea038c9f91ff5a397e4cdbc23b56f7e52e5ed4",
+      "changes": [
+        {
+          "before": "import * as z from 'zod'",
+          "after": "import { z } from '../../../../../../../scripts/genkit-zod4-compat.cjs'",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "path": "@genkit-ai/tools-common/lib/esm/src/eval/evaluate.js",
+      "beforeSha256": "72268aed7016640bbaec8d3c904657ea0f49ee928d76f5df81d53300feeb8d04",
+      "afterSha256": "3c4e2f8e899f26901ea19b17137b3b43eaf8f43362ea09eaa4aab262dc0b60c3",
+      "changes": [
+        {
+          "before": "from 'zod'",
+          "after": "from '../../../../../../../scripts/genkit-zod4-compat.cjs'",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "path": "@genkit-ai/tools-common/lib/esm/src/plugin/config.js",
+      "beforeSha256": "21b4a09826379d3009ee87b69cf60216bf7cfbf121b300a10455a9b1458215e5",
+      "afterSha256": "a6586f2aad775cfa253aabe2b4971b6cbf5b227e5cda9d92f018ae3e1b37d805",
+      "changes": [
+        {
+          "before": "from 'zod'",
+          "after": "from '../../../../../../../scripts/genkit-zod4-compat.cjs'",
+          "count": 1
+        },
+        {
+          "before": "z.function().args(TraceDataSchema).returns(z.any())",
+          "after": "z.custom(value => typeof value === \"function\").transform(fn => z.function({ input: z.tuple([TraceDataSchema]).rest(z.unknown()), output: z.any() }).implement(fn))",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "path": "@genkit-ai/tools-common/lib/esm/src/plugin/plugins.js",
+      "beforeSha256": "8431caab587b0600259e55b65e3e6c71cfe2edde8e6f0a56d98ab7536b4b633d",
+      "afterSha256": "6beb75a6f5ad8467616c94fbda402ef5afe3722577b5d15b92a6ef41bef91cbb",
+      "changes": [
+        {
+          "before": "from 'zod'",
+          "after": "from '../../../../../../../scripts/genkit-zod4-compat.cjs'",
+          "count": 1
+        },
+        {
+          "before": "z\n        .function()\n        .args(z.optional(z.record(z.string(), SupportedFlagValuesSchema)))\n        .returns(z.union([z.void(), z.promise(z.void())]))",
+          "after": "z.custom(value => typeof value === \"function\").transform(hook => function (...args) {\n        const parsed = z.tuple([z.optional(z.record(z.string(), SupportedFlagValuesSchema))]).rest(z.unknown()).parse(args);\n        const result = Reflect.apply(hook, this, parsed);\n        if (result && typeof result.then === \"function\" && typeof result.catch === \"function\") {\n            return z.promise(z.void()).parseAsync(result);\n        }\n        return z.void().parse(result);\n    })",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "path": "@genkit-ai/tools-common/lib/esm/src/server/router.js",
+      "beforeSha256": "2ff70117041a9119e81b742fca9f2a2bba4423b5ab4653d6f963fe7d2f0264ae",
+      "afterSha256": "60e60d2e93bbe9d17c9d51a08f33e37c867c1099f088499f629130cad6d5d893",
+      "changes": [
+        {
+          "before": "from 'zod'",
+          "after": "from '../../../../../../../scripts/genkit-zod4-compat.cjs'",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "path": "@genkit-ai/tools-common/lib/esm/src/types/action.js",
+      "beforeSha256": "e02e7a4d35c2ff4bf1a561b3f780dc4fde462db4a6ed68db6a8bccfa0dba436c",
+      "afterSha256": "96f2f7785fce5ea8222eb4ceb914d79619f2324cc3a884c5fdfe822320685f0a",
+      "changes": [
+        {
+          "before": "from 'zod'",
+          "after": "from '../../../../../../../scripts/genkit-zod4-compat.cjs'",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "path": "@genkit-ai/tools-common/lib/esm/src/types/agent.js",
+      "beforeSha256": "a0af18399b8a390fcd310cb85701211f706fa0fc4a0482bd9cfe7ff9f0cd8ad1",
+      "afterSha256": "54499417a748ded3337fe4e9f3709a6d337ada45b2de0296b01dbfb475abacac",
+      "changes": [
+        {
+          "before": "from 'zod'",
+          "after": "from '../../../../../../../scripts/genkit-zod4-compat.cjs'",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "path": "@genkit-ai/tools-common/lib/esm/src/types/agents-conformance.js",
+      "beforeSha256": "d8b395554fbe2303d37af5575cbda29c8f33cfa62af9a9a6d61120748765a672",
+      "afterSha256": "01b81760d9596db3cc840b5f7ebe534a40ceba9a950ad150fdfb2ad3523b208a",
+      "changes": [
+        {
+          "before": "from 'zod'",
+          "after": "from '../../../../../../../scripts/genkit-zod4-compat.cjs'",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "path": "@genkit-ai/tools-common/lib/esm/src/types/analytics.js",
+      "beforeSha256": "fdc5b316243bf982bf47174399511788a8ea4b349a1df35080ce966a4bd6d650",
+      "afterSha256": "2349bdcf133a89cd482f2fae8e44c09e967309c26ec527c4b0f461eb50828ff0",
+      "changes": [
+        {
+          "before": "import * as z from 'zod'",
+          "after": "import { z } from '../../../../../../../scripts/genkit-zod4-compat.cjs'",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "path": "@genkit-ai/tools-common/lib/esm/src/types/apis.js",
+      "beforeSha256": "d1fbaacc9dc92e7971439b0314cd695b90d80b658b9ef627d9cafb8f57956fb7",
+      "afterSha256": "f3c7beaab728b469a3c35c5c92182210171d372610e1d0e9a3cba067a46c74d3",
+      "changes": [
+        {
+          "before": "from 'zod'",
+          "after": "from '../../../../../../../scripts/genkit-zod4-compat.cjs'",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "path": "@genkit-ai/tools-common/lib/esm/src/types/document.js",
+      "beforeSha256": "92ad56c45624443dc28ab2eaa29445af60aca72d75176bf0277037a3dad18b64",
+      "afterSha256": "e30283915dc75794dc381e53a00e102ba67adc78ad6e7bd6b36e07dd87711640",
+      "changes": [
+        {
+          "before": "from 'zod'",
+          "after": "from '../../../../../../../scripts/genkit-zod4-compat.cjs'",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "path": "@genkit-ai/tools-common/lib/esm/src/types/embedder.js",
+      "beforeSha256": "901f3c9b3e69edd8b4c7ea517b87109867b1e0bb726418b01c2fbce75c2511aa",
+      "afterSha256": "68efdcd22e5a701c78e4ad8dd5e9cd83753df70bd4b4fef47f251bf652860e95",
+      "changes": [
+        {
+          "before": "from 'zod'",
+          "after": "from '../../../../../../../scripts/genkit-zod4-compat.cjs'",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "path": "@genkit-ai/tools-common/lib/esm/src/types/error.js",
+      "beforeSha256": "6267f710e271524196373bbb5fabdce3bfc18ca42601b65a3c19cae068d1c878",
+      "afterSha256": "8d7264892230d2fb7760696a92799d953e1025fb1d49bc23c0faad291d1de098",
+      "changes": [
+        {
+          "before": "from 'zod'",
+          "after": "from '../../../../../../../scripts/genkit-zod4-compat.cjs'",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "path": "@genkit-ai/tools-common/lib/esm/src/types/eval.js",
+      "beforeSha256": "87d2ddfff3b9c9c67757d7ce7f3f1f2d68b7abe7c28875b5c9a9eb4569d236ca",
+      "afterSha256": "e51ab76178f89600b1d38c1c814f4a6a0e9384c79515d27be4e00aac36be3138",
+      "changes": [
+        {
+          "before": "from 'zod'",
+          "after": "from '../../../../../../../scripts/genkit-zod4-compat.cjs'",
+          "count": 1
+        },
+        {
+          "before": "from 'zod-to-json-schema'",
+          "after": "from '../../../../../../../scripts/genkit-json-schema.cjs'",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "path": "@genkit-ai/tools-common/lib/esm/src/types/evaluator.js",
+      "beforeSha256": "ed5a5669387023f09232597357e798c268133550dd097896cbfd8edad73f4e81",
+      "afterSha256": "cdfdb8f2ec95df9dccb287455282aaba8400a445654ec2740f60b500fbaf8481",
+      "changes": [
+        {
+          "before": "from 'zod'",
+          "after": "from '../../../../../../../scripts/genkit-zod4-compat.cjs'",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "path": "@genkit-ai/tools-common/lib/esm/src/types/log.js",
+      "beforeSha256": "ec21dfa8c012228d10bc9314154ffeb7412508490fe6cefc39edabc2c10b3014",
+      "afterSha256": "4eec0d2bc83feb4d1d30001133890eb19fff3a56ee0b3194d6f9a63448618986",
+      "changes": [
+        {
+          "before": "import * as z from 'zod'",
+          "after": "import { z } from '../../../../../../../scripts/genkit-zod4-compat.cjs'",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "path": "@genkit-ai/tools-common/lib/esm/src/types/middleware.js",
+      "beforeSha256": "1c8ad39016d85091c7647f8cd9f21025b579a96ab62805dfd3b03e7c49469ec4",
+      "afterSha256": "dd408e31bb30bd145f2e58c9f0a9c49c30e4e3c40b9e428b65565bd8a5048344",
+      "changes": [
+        {
+          "before": "from 'zod'",
+          "after": "from '../../../../../../../scripts/genkit-zod4-compat.cjs'",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "path": "@genkit-ai/tools-common/lib/esm/src/types/model.js",
+      "beforeSha256": "527019001b0eab7bda786008f25c15e68bc52f1e8aa112c3237387722298bd72",
+      "afterSha256": "bd3e4dcb48ac05b2b6635a625b211fe3c13fed714a3bddff05373fecf0a8ade4",
+      "changes": [
+        {
+          "before": "from 'zod'",
+          "after": "from '../../../../../../../scripts/genkit-zod4-compat.cjs'",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "path": "@genkit-ai/tools-common/lib/esm/src/types/parts.js",
+      "beforeSha256": "56a19b4feadf6fecb06da6989f4d9ee8b8d27b81111cd8de30485e11a7f54e26",
+      "afterSha256": "fc20d217af758cc72f60715949f0ed5f7e30cd455bccde7c18992a675d9c7617",
+      "changes": [
+        {
+          "before": "from 'zod'",
+          "after": "from '../../../../../../../scripts/genkit-zod4-compat.cjs'",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "path": "@genkit-ai/tools-common/lib/esm/src/types/prompt.js",
+      "beforeSha256": "82b62c96408024d679b636f7540a78d507aa3cae8ac4677842a0eb6ab11fe748",
+      "afterSha256": "7a38015502fd65b430b1ebb0c7f5c86377425db7e9d9dc00987793ef9cd4e09e",
+      "changes": [
+        {
+          "before": "from 'zod'",
+          "after": "from '../../../../../../../scripts/genkit-zod4-compat.cjs'",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "path": "@genkit-ai/tools-common/lib/esm/src/types/reflection.js",
+      "beforeSha256": "f19515c41857fa4c831057edd16baabafa8e92bec193eb9cb0a673e8ed4711f3",
+      "afterSha256": "0d9e4f74517e2c9aabad4ebc7d51d2b7d9aae21330d03eeda56c0581c08264ff",
+      "changes": [
+        {
+          "before": "from 'zod'",
+          "after": "from '../../../../../../../scripts/genkit-zod4-compat.cjs'",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "path": "@genkit-ai/tools-common/lib/esm/src/types/reranker.js",
+      "beforeSha256": "5ddde9c66d2cd412afdd36d4a8dcbf62ade167bc3abdca95b469bc0f97231b49",
+      "afterSha256": "00ea197ea98ea1ab22b95d89142a22f89ae8ac724e479955dd42c7d2c3ac5568",
+      "changes": [
+        {
+          "before": "from 'zod'",
+          "after": "from '../../../../../../../scripts/genkit-zod4-compat.cjs'",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "path": "@genkit-ai/tools-common/lib/esm/src/types/retriever.js",
+      "beforeSha256": "8f9548a45ca4e633bc3ccf6d8389d4d6a4fddab6085bdc69f105d7cb068f5f50",
+      "afterSha256": "18113c98458a346deacc70350434029777764cf05be5ebcbf903180fc45cde05",
+      "changes": [
+        {
+          "before": "from 'zod'",
+          "after": "from '../../../../../../../scripts/genkit-zod4-compat.cjs'",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "path": "@genkit-ai/tools-common/lib/esm/src/types/status.js",
+      "beforeSha256": "dc9b57772af0475796d288dfa98f92c9a1b7aba74c91429d7aa5ed5af5d5c378",
+      "afterSha256": "1386a7a80f699d75a56e1fbb1f9b22ad09dc165a85618e03efc0f57189a6b09d",
+      "changes": [
+        {
+          "before": "import * as z from 'zod'",
+          "after": "import { z } from '../../../../../../../scripts/genkit-zod4-compat.cjs'",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "path": "@genkit-ai/tools-common/lib/esm/src/types/trace.js",
+      "beforeSha256": "91d3f59ac2d5d7853918e78f314aaf5d62bff5add8d9f0a977179efa64a54b35",
+      "afterSha256": "541701b9ba5c8f4be5b7cf267a2c1d77d7d40f4bcafa400d79291cfbba433a9d",
+      "changes": [
+        {
+          "before": "import * as z from 'zod'",
+          "after": "import { z } from '../../../../../../../scripts/genkit-zod4-compat.cjs'",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "path": "@genkit-ai/telemetry-server/lib/cjs/types.js",
+      "beforeSha256": "27fdae176d701e2eb574b7e8597c2eb21d7aed6dde77cb1b7312a72d70f26f0c",
+      "afterSha256": "543a2aa1a94916a326055b5d9ebb40642c9be6ec72969aca57eb09c51bb45ac8",
+      "changes": [
+        {
+          "before": "require(\"zod\")",
+          "after": "require(\"../../../../../scripts/genkit-zod4-compat.cjs\")",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "path": "@genkit-ai/telemetry-server/lib/esm/types.js",
+      "beforeSha256": "a82319d867536f2acf831a214ea80fde76bfff479be4d0cacfc0b5d461b4ee23",
+      "afterSha256": "ea4628f1fef8001ad6d7867440f686c5d06c479e2984bce3a677a30117ca322e",
+      "changes": [
+        {
+          "before": "import * as z from 'zod'",
+          "after": "import { z } from '../../../../../scripts/genkit-zod4-compat.cjs'",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "path": "genkit-cli/dist/mcp/docs.js",
+      "beforeSha256": "66c5479486d96944b940926a6cb7a4a3718950ad6e5e2ac7a14bb0e9f43e241f",
+      "afterSha256": "2ec8ee3721c9c4a8fb1648761aec58d2d47441341328055a56bd014b901a05fc",
+      "changes": [
+        {
+          "before": "require(\"zod\")",
+          "after": "require(\"../../../../scripts/genkit-zod4-compat.cjs\")",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "path": "genkit-cli/dist/mcp/flows.js",
+      "beforeSha256": "603c091b60dd6bd1d0e89cdb9ea1a3105118570736a0d5b44b808752de6507c4",
+      "afterSha256": "5864eb35a1e916f9f9d60ddd90e25e3f5812fc18962d719e63316421dfb349ca",
+      "changes": [
+        {
+          "before": "require(\"zod\")",
+          "after": "require(\"../../../../scripts/genkit-zod4-compat.cjs\")",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "path": "genkit-cli/dist/mcp/prompts/init.js",
+      "beforeSha256": "691308ffd68e302e905e3a8c02ff218ba922c07a5531a368f715835310a7e240",
+      "afterSha256": "97b959f580f78098ffe44a6aa2e3c8af36ec514d94edb4befdda260bc6680ef7",
+      "changes": [
+        {
+          "before": "require(\"zod\")",
+          "after": "require(\"../../../../../scripts/genkit-zod4-compat.cjs\")",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "path": "genkit-cli/dist/mcp/runtime.js",
+      "beforeSha256": "bf033054198094fb055dc4667a827fc9eddba0037d27727d297a2bc6a184b930",
+      "afterSha256": "aef7fa6535098cd21e47ffb8bb2eb19d53f9a80c30dd867c70301df03ffef46e",
+      "changes": [
+        {
+          "before": "require(\"zod\")",
+          "after": "require(\"../../../../scripts/genkit-zod4-compat.cjs\")",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "path": "genkit-cli/dist/mcp/trace.js",
+      "beforeSha256": "6936cd3a3f51418f9d4af663aa1531d45016f5acf2f1a0a1339d078b53fb3451",
+      "afterSha256": "90a677ba9637f0611adb42d5a1e67e133dde24a103c427dac4b4c54e679aac06",
+      "changes": [
+        {
+          "before": "require(\"zod\")",
+          "after": "require(\"../../../../scripts/genkit-zod4-compat.cjs\")",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "path": "genkit-cli/dist/mcp/usage.js",
+      "beforeSha256": "296860cc4ec496c25cd2ac5f28be910cd62c16db87d218cb64fa0c41f87525e1",
+      "afterSha256": "be7d2ab224e0cf504d07fba8b6ba86f6c0646d17f72f35a775b0eeeaff97113f",
+      "changes": [
+        {
+          "before": "require(\"zod\")",
+          "after": "require(\"../../../../scripts/genkit-zod4-compat.cjs\")",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "path": "genkit-cli/dist/mcp/utils.js",
+      "beforeSha256": "321b926d60af722d43c4fccec70d468942247557dc376dac1d82f914d5e8297c",
+      "afterSha256": "16545129dc953dcd5b0afd685d07cf37cff817771a158c9d74b037c7cc3bcf59",
+      "changes": [
+        {
+          "before": "require(\"zod\")",
+          "after": "require(\"../../../../scripts/genkit-zod4-compat.cjs\")",
+          "count": 1
+        }
+      ]
+    }
+  ],
+  "developmentOnly": [
+    "@genkit-ai/tools-common",
+    "@genkit-ai/telemetry-server",
+    "genkit-cli"
+  ]
+}
